@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+# work folders and renders
+*-edit/
+test*/
+*.mp4
+*.mov
+*.wav

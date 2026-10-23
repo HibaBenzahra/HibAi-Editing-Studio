@@ -1,0 +1,13 @@
+{
+  "name": "hibai-studio",
+  "version": "1.0.0",
+  "description": "HibAI Studio — turn a talking video into a ready-to-post reel: pauses cut, word-by-word Darija/Arabic/English captions, HibAI colours. Starts with a HibAI dashboard that asks what you want.",
+  "author": {
+    "name": "Hiba Benzahra (HibAI)",
+    "url": "https://github.com/HibaBenzahra"
+  },
+  "homepage": "https://github.com/HibaBenzahra/hibai-studio",
+  "repository": "https://github.com/HibaBenzahra/hibai-studio",
+  "license": "MIT",
+  "keywords": ["video", "reels", "captions", "darija", "arabic", "hibai"]
+}

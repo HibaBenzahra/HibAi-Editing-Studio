@@ -1,0 +1,19 @@
+{
+  "name": "hibai",
+  "owner": {
+    "name": "Hiba Benzahra (HibAI)",
+    "url": "https://github.com/HibaBenzahra"
+  },
+  "metadata": {
+    "description": "HibAI — learn & make money with AI. Skills by Hiba (@hibssssi)."
+  },
+  "plugins": [
+    {
+      "name": "hibai-studio",
+      "source": "./",
+      "description": "Talking video → finished reel, with a HibAI dashboard.",
+      "version": "1.0.0",
+      "category": "video"
+    }
+  ]
+}
