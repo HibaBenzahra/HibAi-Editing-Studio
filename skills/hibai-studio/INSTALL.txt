@@ -1,0 +1,21 @@
+HibAI Studio — by Hiba (@hibssssi)
+==================================
+
+مرحبا بيك ف HibAI Studio 💚  Welcome!
+
+INSTALL (Claude desktop app → Code tab, or Claude Code)
+  1. Unzip this file. You get a folder called "hibai-studio".
+  2. Move that folder into:
+       Windows:  C:\Users\<you>\.claude\skills\
+       Mac:      ~/.claude/skills/
+     (create the "skills" folder if it doesn't exist)
+  3. Open a new chat, attach a talking video and say:
+       "قاد ليا هاد الفيديو"  or  "edit my video"
+
+Claude checks the tools it needs (ffmpeg, Python, Whisper) and offers to install
+anything missing.
+
+Join the HibAI community: https://societiz.com/communities/learn-earn-with-ai-262551
+
+© 2026 Hiba Benzahra (HibAI). Personal use only — please don't share or resell
+this file. See LICENSE.
