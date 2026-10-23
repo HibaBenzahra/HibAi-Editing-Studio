@@ -48,13 +48,15 @@ W_OUT, H_OUT, FPS = 1080, 1920, 30
 SAFE_TOP = 150
 CAPTION_BOTTOM = 1460
 SIDE_MARGIN = 140
+LOGO_BOX = 120
 
 DEFAULT_BRIEF = {
     "language": "ar",            # whisper language: ar | en | fr | auto
     "video_type": "talking",
     "goal": "",
     "hook": "",
-    "colors": {"main": "#8eff01", "accent": "#8b53fe", "text": "#ffffff", "ground": "#0d0f14"},
+    "colors": {"main": "#ffd23f", "accent": "#ff5e5b", "text": "#ffffff", "ground": "#0d0f14"},
+    "logo": "",                  # image file inside the work folder, shown small at the top
     "font": "Segoe UI",
     "caption_style": "pop",      # pop | clean | box | none
     "caption_size": "big",       # medium | big | huge
@@ -228,7 +230,11 @@ def cmd_script(args):
     kept = [(i, s) for i, s in enumerate(tr["sentences"]) if not s.get("drop")]
     hints = []
     for (i, a), (j, b) in zip(kept, kept[1:]):
-        if difflib.SequenceMatcher(None, sentence_text(a), sentence_text(b)).ratio() > 0.6:
+        ta, tb = sentence_text(a), sentence_text(b)
+        # different numbers = a list ("10 years… 5 years…"), not a second try
+        if re.findall(r"\d+", ta) != re.findall(r"\d+", tb):
+            continue
+        if difflib.SequenceMatcher(None, ta, tb).ratio() > 0.6:
             hints.append(i)
             print(f"🔁 [{i}] and [{j}] sound like a retake — suggest dropping [{i}]")
     if not hints:
@@ -491,8 +497,19 @@ def cmd_render(args):
         fc.append(f"[vcat][bar]overlay=x='-w+w*t/{dur:.3f}':y={CAPTION_BOTTOM + 28}:eof_action=pass[vbar]")
     else:
         fc.append("[vcat]null[vbar]")
+    logo = b.get("logo") and os.path.join(work, os.path.basename(b["logo"]))
+    extra_inputs = []
+    if logo and os.path.isfile(logo):
+        # small, top-left, under the phone's status bar; shape kept as-is
+        extra_inputs = ["-i", os.path.basename(logo)]
+        fc.append(f"[1:v]scale={LOGO_BOX}:{LOGO_BOX}:force_original_aspect_ratio=decrease,format=rgba[lg]")
+        fc.append(f"[vbar][lg]overlay={SIDE_MARGIN - 80}:{SAFE_TOP + 10}:format=auto[vlogo]")
+    else:
+        if logo:
+            print(f"⚠️ logo not found: {logo} — continuing without it")
+        fc.append("[vbar]null[vlogo]")
     # No colour grading on the person — only format + captions on top.
-    fc.append("[vbar]format=yuv420p,subtitles=captions.ass:fontsdir=fonts[vo]")
+    fc.append("[vlogo]format=yuv420p,subtitles=captions.ass:fontsdir=fonts[vo]")
 
     fc += audio_chain(edit)
     m = None if preview else measure_loudness(src, edit, work)
@@ -508,7 +525,7 @@ def cmd_render(args):
         f.write(";\n".join(fc))
     out = os.path.join(work, "preview.mp4" if preview else "final.mp4")
     quality = ["-preset", "veryfast", "-crf", "28"] if preview else ["-preset", "slow", "-crf", "20", "-maxrate", "8M", "-bufsize", "16M"]
-    cmd = ["ffmpeg", "-v", "error", "-y", "-i", src, "-/filter_complex", "_video.ffscript",
+    cmd = ["ffmpeg", "-v", "error", "-y", "-i", src, *extra_inputs, "-/filter_complex", "_video.ffscript",
            "-map", "[vo]", "-map", "[ao]", "-c:v", "libx264", *quality, "-pix_fmt", "yuv420p",
            "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
            "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", out]

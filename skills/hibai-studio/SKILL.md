@@ -1,6 +1,6 @@
 ---
 name: hibai-studio
-description: HibAI Studio by Hiba (@hibssssi) — turns a talking-to-camera video into a ready-to-post 9:16 reel. Cuts the pauses, writes word-by-word captions (Darija, Arabic, English, French), punch-in zooms, HibAI colours, loudness fixed. Starts with a branded HibAI dashboard that asks the user what they want. Use when the user says "edit my video", "make a reel", "cut the silences", "add captions", "قاد ليا هاد الفيديو", "ديرلي ريل", "قطع السكتات", "زيد الكابشن", or sends a talking-head video.
+description: HibAI Studio by Hiba (@hibssssi) — turns a talking-to-camera video into a ready-to-post 9:16 reel. Cuts the pauses, writes word-by-word captions (Darija, Arabic, English, French), punch-in zooms, your brand colours and logo, loudness fixed. Starts with a branded HibAI dashboard that asks the user what they want. Use when the user says "edit my video", "make a reel", "cut the silences", "add captions", "قاد ليا هاد الفيديو", "ديرلي ريل", "قطع السكتات", "زيد الكابشن", or sends a talking-head video.
 ---
 
 # HibAI Studio 🎬
@@ -208,6 +208,7 @@ member, skip it.
 | "bigger captions" | `caption_size` → `huge` in brief.json, `render` |
 | "one word at a time" | `words_per_card` → 1, `render` |
 | "different colour" | `colors.main` / `colors.accent`, `render` |
+| "add my logo" | save the image in `<work>`, set `"logo": "<file name>"`, `render` |
 | "change the hook" | `hook`, `render` |
 | "cut tighter" / "too fast" | `pace` → `fast` / `calm`, `plan`, `render` |
 | "remove that sentence" | `script` → `drop N` → `plan` → `render` |

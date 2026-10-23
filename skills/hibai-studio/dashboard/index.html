@@ -111,6 +111,17 @@ input:focus,textarea:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(14
 .sw code{font-size:12px;color:var(--muted);direction:ltr;display:block;margin-top:4px}
 .livecap{margin-top:18px;text-align:center;font-weight:800;font-size:24px;padding:18px;border-radius:14px;background:linear-gradient(160deg,#2a2f3d,#141821)}
 
+/* file drop */
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:190px;border:1.5px dashed rgba(255,255,255,.18);
+  border-radius:18px;background:rgba(13,15,20,.55);cursor:pointer;padding:20px;text-align:center;transition:border .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--lime);background:rgba(142,255,1,.05)}
+.drop.has{border-style:solid}
+.drop img{max-width:160px;max-height:110px;object-fit:contain;margin-bottom:10px;
+  background:repeating-conic-gradient(#222 0 25%,#2c2c2c 0 50%) 0 0/16px 16px;border-radius:8px}
+.drop .plus{font-size:40px;color:var(--lime);line-height:1;margin-bottom:6px}
+.drop .l1{font-weight:700;font-size:17px}
+.drop .l2{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px;direction:ltr}
+
 /* nav */
 .nav{display:flex;align-items:center;justify-content:space-between;margin-top:32px;gap:12px}
 .btn{border:none;border-radius:99px;padding:15px 30px;font:800 17px var(--ar);cursor:pointer;transition:transform .15s,box-shadow .15s}
@@ -221,8 +232,19 @@ function field(q){
         ${q.look === "fonts" ? `<span class="fontdemo" style="font-family:'${esc(o.value)}'">مرحبا HibAI</span>` : ""}
         <span class="l1">${esc(o.dr)}</span><span class="l2">${esc(o.en)}</span>
       </button>`).join("")}</div>`;
+  if (q.type === "file"){
+    const has = v && (v.data || typeof v === "string");
+    const src = v && v.data ? v.data : (typeof v === "string" && v ? "api/file/" + encodeURIComponent(v) : "");
+    return `<label class="drop ${has ? "has" : ""}" id="drop">
+        <input type="file" id="file" accept="${esc(q.accept || "image/*")}" hidden>
+        ${has ? `<img src="${src}" alt="">` : `<span class="plus">+</span>`}
+        <span class="l1">${has ? "بدّل الصورة" : "ضغط ولا جرّ الصورة هنا"}</span>
+        <span class="l2">${has ? "Change image" : "Click or drop an image here"}</span>
+      </label>${has ? `<button class="skip" id="clear">حيّد الصورة · remove</button>` : ""}`;
+  }
   if (q.type === "colors") return `
-      <div class="presets">${q.presets.map((p, i) => `<button class="preset" data-p="${i}"><i style="background:${p.main}"></i><i style="background:${p.accent}"></i><i style="background:${p.text}"></i>${esc(p.name)}</button>`).join("")}</div>
+      <div class="presets">${q.presets.map((p, i) => `<button class="preset" data-p="${i}"><i style="background:${p.main}"></i><i style="background:${p.accent}"></i><i style="background:${p.text}"></i>${esc(p.name)}</button>`).join("")}
+        <button class="preset custom" id="custom">🎨 ديالي · Custom</button></div>
       <div class="swatches">${q.fields.map(f => `<label class="sw"><input type="color" data-k="${f.key}" value="${esc(v[f.key])}">
         <span class="l1">${esc(f.dr)}</span><span class="l2">${esc(f.en)}</span><code>${esc(v[f.key])}</code></label>`).join("")}</div>
       <div class="livecap" id="live"></div>`;
@@ -240,6 +262,23 @@ function wire(q){
     const upd = () => { answers[q.key] = inp.value; const ch = document.getElementById("chars"); if (ch) ch.textContent = `${inp.value.length} / ${q.max || 120}`; };
     inp.addEventListener("input", upd); upd();
   }
+  const file = document.getElementById("file");
+  if (file){
+    const take = f => {
+      if (!f || !f.type.startsWith("image/")) return;
+      if (f.size > 8e6) { alert("الصورة كبيرة بزاف (8MB max) · Image too big (8MB max)"); return; }
+      const rd = new FileReader();
+      rd.onload = () => { answers[q.key] = {name: f.name, data: rd.result}; render(); };
+      rd.readAsDataURL(f);
+    };
+    file.onchange = () => take(file.files[0]);
+    const drop = document.getElementById("drop");
+    drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+    drop.ondragleave = () => drop.classList.remove("over");
+    drop.ondrop = e => { e.preventDefault(); take(e.dataTransfer.files[0]); };
+    const clr = document.getElementById("clear");
+    if (clr) clr.onclick = () => { answers[q.key] = ""; render(); };
+  }
   const tg = document.getElementById("tg");
   if (tg) tg.onclick = () => { answers[q.key] = !answers[q.key]; render(); };
   card.querySelectorAll(".opt").forEach(b => b.onclick = () => {
@@ -251,14 +290,18 @@ function wire(q){
       const c = answers[q.key];
       document.getElementById("live").innerHTML =
         `<span style="color:${c.text}">كتعلم </span><span style="color:${c.main}">AI</span><span style="color:${c.text}"> و </span><span style="color:${c.accent}">تربح</span><span style="color:${c.text}"> معايا</span>`;
-      card.querySelectorAll(".preset").forEach((p, i) => {
-        const s = q.presets[i]; p.classList.toggle("on", s.main === c.main && s.accent === c.accent && s.text === c.text);
+      let matched = false;
+      card.querySelectorAll(".preset[data-p]").forEach(p => {
+        const s = q.presets[+p.dataset.p], on = s.main === c.main && s.accent === c.accent && s.text === c.text;
+        p.classList.toggle("on", on); matched ||= on;
       });
+      document.getElementById("custom").classList.toggle("on", !matched);
     };
+    document.getElementById("custom").onclick = () => card.querySelector(".sw input").click();
     card.querySelectorAll(".sw input").forEach(inp => inp.addEventListener("input", () => {
       answers[q.key][inp.dataset.k] = inp.value; inp.parentElement.querySelector("code").textContent = inp.value; live();
     }));
-    card.querySelectorAll(".preset").forEach(p => p.onclick = () => {
+    card.querySelectorAll(".preset[data-p]").forEach(p => p.onclick = () => {
       const s = q.presets[+p.dataset.p]; answers[q.key] = {main: s.main, accent: s.accent, text: s.text}; render();
     });
     live();
@@ -270,8 +313,8 @@ function renderWelcome(){
     <h1 class="hello">مرحبا <em>بيك</em></h1>
     <div class="big-mark"><b>Hib</b><span>AI</span></div>
     <div class="studio">Studio</div>
-    <p class="lead">جاوب على شي أسئلة صغار، وأنا نقاد ليك الفيديو: نقطع السكتات، نكتب الكابشن بالكلمة، ونلبسو ألوان HibAI.</p>
-    <p class="lead-en">Answer a few quick questions and I'll edit your video: pauses cut, word-by-word captions, dressed in HibAI colours.</p>
+    <p class="lead">جاوب على أسئلة بالزربة باش نقدر نقاد ليك الفيديو بالطريقة اللي بغيتي.</p>
+    <p class="lead-en">Answer a few quick questions so I can edit your video exactly the way you want.</p>
     <div class="nav" style="justify-content:center"><button class="btn go" id="next">يلاه نبداو<span class="sub">let's go</span></button></div>
     <div class="by"><img src="assets/pfp.png" alt="" onerror="this.remove()"><span>Welcome to the HibAI community · by</span><b>@hibssssi</b></div>
   </div>`;
@@ -284,6 +327,7 @@ function pretty(q){
   if (q.type === "toggle") return v ? "إيه · Yes" : "لا · No";
   if (q.type === "choice"){ const o = q.options.find(o => o.value === v); return o ? `${esc(o.dr)} · <i style="font-family:var(--serif);color:var(--muted);width:auto;height:auto">${esc(o.en)}</i>` : esc(v); }
   if (q.type === "colors") return q.fields.map(f => `<i style="background:${v[f.key]}"></i>`).join("");
+  if (q.type === "file") return v ? esc(v.name || v) : `<span style="color:var(--muted);font-weight:400">—</span>`;
   return v ? esc(v) : `<span style="color:var(--muted);font-weight:400">—</span>`;
 }
 
@@ -301,10 +345,20 @@ async function save(){
   const brief = toBrief();
   brief.saved_at = new Date().toISOString();
   try {
+    // images go up first; the brief keeps just the saved file name
+    for (const q of Q.filter(q => q.type === "file")) {
+      const v = answers[q.key];
+      if (!v || !v.data) continue;
+      const r = await fetch("api/upload", {method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({key: q.key, name: v.name, data: v.data})});
+      if (!r.ok) throw new Error(r.status);
+      setNested(brief, q.key, (await r.json()).file);
+    }
     const r = await fetch("api/brief", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(brief)});
     if (!r.ok) throw new Error(r.status);
   } catch (e) {
     // Opened as a plain file (no Claude server): hand the brief over as a download instead.
+    Q.filter(q => q.type === "file").forEach(q => { const v = answers[q.key]; if (v && v.name) setNested(brief, q.key, v.name); });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(brief, null, 1)], {type: "application/json"}));
     a.download = "brief.json"; a.click();

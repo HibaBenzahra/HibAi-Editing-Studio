@@ -42,8 +42,8 @@ window.HIBAI_QUESTIONS = [
   },
   {
     key: "caption_style", type: "choice", look: "captions",
-    dr: { title: "كيفاش بغيتي الكابشن؟", help: "الكلمة اللي كتقولها كتشعل بلون HibAI" },
-    en: { title: "Caption style", help: "The word you're saying lights up in HibAI colour" },
+    dr: { title: "كيفاش بغيتي الكابشن؟", help: "الكلمة اللي كتقولها كتشعل باللون ديالك" },
+    en: { title: "Caption style", help: "The word you're saying lights up in your colour" },
     options: [
       { value: "pop", dr: "كتنط", en: "Pop", demo: "pop" },
       { value: "clean", dr: "نقي", en: "Clean", demo: "clean" },
@@ -100,20 +100,28 @@ window.HIBAI_QUESTIONS = [
   },
   {
     key: "colors", type: "colors",
-    dr: { title: "الألوان", help: "ألوان HibAI واجدين — بدّلهم إلا بغيتي" },
-    en: { title: "Colours", help: "HibAI colours are ready, change them if you like" },
+    dr: { title: "ألوان البراند ديالك", help: "ختار شي ستايل، ولا ضغط على المربعات وحط الألوان ديالك" },
+    en: { title: "Your brand colours", help: "Pick a style, or tap the squares and set your own colours" },
     fields: [
       { key: "main", dr: "الكلمة الحالية", en: "Current word" },
       { key: "accent", dr: "الكلمات المهمة", en: "Key words" },
       { key: "text", dr: "باقي الكتابة", en: "Other text" }
     ],
     presets: [
-      { name: "HibAI", main: "#8eff01", accent: "#8b53fe", text: "#ffffff" },
-      { name: "Purple", main: "#b48cff", accent: "#8eff01", text: "#ffffff" },
+      { name: "Sunset", main: "#ff7a1a", accent: "#ffd23f", text: "#ffffff" },
       { name: "Gold", main: "#ffd23f", accent: "#ff5e5b", text: "#ffffff" },
-      { name: "Mono", main: "#ffffff", accent: "#8eff01", text: "#d6d9e0" }
+      { name: "Ocean", main: "#3ec7ff", accent: "#ffe066", text: "#ffffff" },
+      { name: "Rose", main: "#ff5fa2", accent: "#ffc2dc", text: "#ffffff" },
+      { name: "Mint", main: "#3dffb0", accent: "#ffffff", text: "#e8fff6" },
+      { name: "Mono", main: "#ffffff", accent: "#ffd23f", text: "#cfd3da" }
     ],
-    default: { main: "#8eff01", accent: "#8b53fe", text: "#ffffff" }
+    default: { main: "#ffd23f", accent: "#ff5e5b", text: "#ffffff" }
+  },
+  {
+    key: "logo", type: "file", accept: "image/png,image/jpeg,image/webp",
+    dr: { title: "زيد اللوغو ولا شي صورة", help: "كتبان صغيرة ف الفوق طول الفيديو. PNG بلا خلفية كيجي أحسن — ولا دوز" },
+    en: { title: "Add your logo or an image", help: "Shows small at the top for the whole video. A PNG with no background looks best, or skip" },
+    default: ""
   },
   {
     key: "font", type: "choice", look: "fonts",

@@ -19,7 +19,7 @@ HibAI Studio is a Claude skill that edits your talking-to-camera videos for you:
 - ✂️ **Cuts the pauses** and the lines you don't want
 - 💬 **Word-by-word captions** in Darija, Arabic, English or French, with the word you're saying lit up
 - 🔍 **Light punch-in zooms** so the cuts feel smooth
-- 🎨 **HibAI colours** (or your own), hook headline, handle, closing line
+- 🎨 **Your brand**: colour palettes or your own colours, your logo, hook headline, handle, closing line
 - 🔊 **Loudness fixed** for Instagram / TikTok (-14 LUFS)
 - 📝 Subtitles (`.srt`) + full text for your post caption
 
