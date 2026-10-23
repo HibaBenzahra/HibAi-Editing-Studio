@@ -58,8 +58,17 @@ the dashboard shows it. See [`references/dashboard.md`](skills/hibai-studio/refe
 
 ## Community
 
-Learn more about making content and money with AI → **[@hibssssi](https://instagram.com/hibssssi)**
+**تعلم واربح بالـ AI · Learn & Earn with AI** — join the HibAI community:
+👉 **[societiz.com/communities/learn-earn-with-ai](https://societiz.com/communities/learn-earn-with-ai-262551)**
+
+Follow along on Instagram → **[@hibssssi](https://instagram.com/hibssssi)**
+
+## License
+
+© 2026 Hiba Benzahra (HibAI). All rights reserved. You can install and use HibAI Studio
+for your own videos. Sharing, reselling or publishing copies or modified versions needs
+permission. See [LICENSE](LICENSE).
 
 ---
 
-<p align="center"><sub>Made by Hiba · HibAI · MIT License</sub></p>
+<p align="center"><sub>Made by Hiba · HibAI</sub></p>
