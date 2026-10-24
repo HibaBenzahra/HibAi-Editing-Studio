@@ -229,12 +229,20 @@ const PLATS=[{v:'instagram',n:'إنستغرام'},{v:'tiktok',n:'تيك توك'}
 const LENS=[{v:'auto',n:'أوتوماتيك'},{v:'30',n:'قل من 30 ث'},{v:'60',n:'دقيقة'},{v:'90',n:'دقيقة ونص'},{v:'full',n:'كيف ما هو'}];
 const BGS=[{v:'auto',n:'نقرّرو من بعد'},{v:'none',n:'بلا'},{v:'own',n:'عندي ملف'}];
 const SFXS=[{v:'auto',n:'أوتوماتيك'},{v:'on',n:'شعّلها'},{v:'off',n:'بلاها'}];
+const GOALS=[{v:'auto',n:'أوتوماتيك',d:'نفهمو من الهضرة'},{v:'sell',n:'نبيع',d:'منتج ولا خدمة'},{v:'teach',n:'نعلّم',d:'نصائح وشروحات'},
+  {v:'grow',n:'نكبّر الحساب',d:'متابعين وتفاعل'},{v:'brand',n:'البراند الشخصي',d:'قصتي وخبرتي'},{v:'announce',n:'نعلن',d:'إطلاق، إيفنت، عرض'}];
+const AUDIENCES=[{v:'auto',n:'أوتوماتيك'},{v:'beginners',n:'مبتدئين'},{v:'pros',n:'محترفين'},{v:'clients',n:'كليان محتملين'},{v:'everyone',n:'الناس كاملين'}];
+const VIBES=[{v:'auto',n:'أوتوماتيك',d:'حسب الهضرة'},{v:'energetic',n:'حماسي',d:'حركة بزاف، كلمات كتخبط'},
+  {v:'clean',n:'نقي وتعليمي',d:'واضح ومرتب، بلا مبالغة'},{v:'luxury',n:'راقي وهادي',d:'كابشن ثابت، بلا خط تقدّم، حركة ناعمة'},
+  {v:'fun',n:'ضحك ومرح',d:'ستيكرز وحركات مضحكة'}];
 const SERVER=location.protocol.startsWith('http');
+const tg=(k,dr,en)=>`<button type="button" class="toggle ${A[k]?'on':''}" data-tg="${k}" role="switch" aria-checked="${!!A[k]}"><span class="state">${dr}<span style="display:block;font:italic 400 15px var(--serif);color:var(--muted);direction:ltr;text-align:right">${en}</span></span><span class="switch"></span></button>`;
 
 /* ═══ Answers (same shape the engine reads) ═══ */
 const A={note:'', idMode:'auto', palette:null, custom:{bg:'#111827',ink:'#F9FAFB',acc:'#22C55E'}, url:'', logo:null, logoSaved:false,
   font:'auto', capStyle:'auto', digits:'western', pace:'auto', ctype:'auto', orientation:['9:16'], platforms:[], length:'auto',
-  bgAudio:'auto', sfx:'auto', endOn:false, handle:'', cta:'', word:'', movesOn:false};
+  bgAudio:'auto', sfx:'auto', endOn:false, handle:'', cta:'', word:'',
+  goal:'auto', audience:'auto', vibe:'auto', hookAuto:true, hook:'', keywords:'', bar:true, autoRetakes:false, enSubs:false};
 const touched=new Set();
 
 /* ═══ Helpers ═══ */
@@ -270,6 +278,8 @@ const STEPS=[
  {group:null, dr:'كتب شنو بغيتي', en:'Tell me what you want', help:'بغيتي تختصر؟ كتب هنا وضغط «دوز الأسئلة». ولا كمّل جاوب.<i>In a hurry? Write here and skip the rest, or keep going.</i>',
   body:()=>`<textarea id="note" dir="auto" placeholder="مثلا: إعلان للمحل ديالي، ألوان اللوغو أحمر وأبيض، إيقاع سريع، وفالآخر «حجز دابا»">${esc(A.note)}</textarea>
    <div class="nav" style="margin-top:12px"><span></span><button type="button" class="btn ghost" id="skipAll">دوز الأسئلة ونبداو <span class="sub2">skip all</span></button></div>`},
+ {id:'goal', group:'hibai', dr:'شنو الهدف ديال الفيديو؟', en:'What is the video for?', help:'باش نختار الهوك، المشاهد والجملة الأخيرة على حسابو.<i>Shapes the hook, the scenes and the closing line.</i>',
+  body:()=>choice(GOALS,'goal')+`<div class="sub">شكون كيتفرج؟<i>Who is watching?</i></div>`+choice(AUDIENCES,'audience','chips')},
  {group:'identity', dr:'ألوان البراند ديالك', en:'Your brand colours', help:'الكروت والكتابة كاملين كياخدو هاد الألوان. الصورة ديالك ما كتبدّلش.<i>Cards and text use these colours. Your face is never recoloured.</i>',
   body:()=>`<div class="tabs">${[['palette','ألوان واجدة'],['custom','نختارها براسي'],['url','من السيت ولا الحساب ديالي']].map(([m,n])=>`<button type="button" class="tab ${A.idMode===m||(A.idMode==='auto'&&m==='palette')?'on':''}" data-tab="${m}">${n}</button>`).join('')}</div>
    ${A.idMode==='custom'?`<div class="swatches">${[['bg','الخلفية'],['ink','الكتابة'],['acc','الكلمة المهمة']].map(([k,n])=>`<label class="sw"><input type="color" data-c="${k}" value="${A.custom[k].toLowerCase()}"><span>${n}</span></label>`).join('')}</div>
@@ -284,14 +294,25 @@ const STEPS=[
   body:()=>`<div class="opts wide">${FONTS.map(f=>`<button type="button" class="opt fontc ${A.font===f.v?'on':''}" data-k="font" data-v="${esc(f.v)}">${f.v==='auto'?'':`<span class="s" style="font-family:'${f.v}';font-weight:${f.v==='Lalezar'?400:700}">${FONT_SAMPLE}</span>`}<span class="l1">${esc(f.n)}</span><span class="l2">${esc(f.d)}</span></button>`).join('')}</div>`},
  {group:'capStyle', dr:'شكل الكابشن', en:'Caption style', help:'الكلمة كتتلوّن فاللحظة اللي كتقولها — بالألوان والخط اللي ختاريتي.<i>The word lights up as you say it, in your colours and font.</i>',
   body:()=>`<div class="opts">${CAPS.map(c=>`<button type="button" class="opt ${A.capStyle===c.v?'on':''} cap-${c.v}" data-k="capStyle" data-v="${c.v}"><span class="phone"><span class="person"></span><span class="cap">${c.v==='auto'?'✨':capWords()}</span></span><span class="l1">${c.n}</span><span class="l2">${c.d}</span></button>`).join('')}</div>`},
+ {id:'vibe', group:'hibai', dr:'الفيب ديال الفيديو', en:'The vibe', help:'كيبدّل الحركة ديال الكابشن والمشاهد.<i>Changes how captions and scenes move.</i>',
+  body:()=>choice(VIBES,'vibe')},
  {group:'digits', dr:'الأرقام', en:'Numbers', help:'فالكابشن والرسومات.<i>In captions and graphics.</i>',
   body:()=>choice([{v:'western',n:'عادية',d:'خصم 25% على 3 قطع'},{v:'arabic',n:'مشرقية',d:'خصم ٢٥٪ على ٣ قطع'}],'digits')},
  {group:'pace', dr:'الإيقاع', en:'Pace', help:'شحال من مرة الكادر كيتحرك ويتبدّل.<i>How often the frame moves and changes.</i>',
   body:()=>`<div class="opts">${PACES.map(p=>`<button type="button" class="opt ${A.pace===p.v?'on':''}" data-k="pace" data-v="${p.v}"><span class="stage">${p.seg?Array.from({length:p.seg},(_,i)=>`<b style="height:${20+((i*37)%16)}px"></b>`).join(''):'<span style="color:var(--muted);font-size:13px">حسب الهضرة</span>'}</span><span class="l1">${p.n}</span><span class="l2">${p.d}</span></button>`).join('')}</div>`},
  {group:'content', dr:'نوع الفيديو', en:'Video type', help:'إلا ما ختاريتيش، غادي نعرفو من الفيديو براسو.<i>Skip it and I\'ll tell from the video.</i>',
   body:()=>choice(CTYPES,'ctype','chips')},
+ {id:'hook', group:'hibai', dr:'الهوك والكلمات المهمة', en:'Hook & key words', help:'الهوك = جملة قصيرة كتبان فوق ف أول ثواني باش توقّف السكرول.<i>The hook is a short line on screen in the first seconds to stop the scroll.</i>',
+  body:()=>`<button type="button" class="toggle ${A.hookAuto?'on':''}" id="hookTg" role="switch" aria-checked="${A.hookAuto}"><span class="state">${A.hookAuto?'كتبو أنت ليا (3 اقتراحات) · Write it for me':'عندي الهوك ديالي · I have my own'}</span><span class="switch"></span></button>
+   ${A.hookAuto?'':`<div class="stack"><label><small>الهوك ديالك</small><input type="text" id="hook" maxlength="60" value="${esc(A.hook)}" placeholder="3 codes f ChatGPT خاصك تعرفهم"></label></div>`}
+   <div class="stack"><label><small>كلمات بغيتيهم يبانو بلون مختلف (فرّق بفاصلة) · Words to highlight</small><input type="text" id="keywords" value="${esc(A.keywords)}" placeholder="ChatGPT, AI, مجاني"></label></div>`},
  {group:'platforms', dr:'فين غادي تنشر؟', en:'Where will you post?', help:'باش نبعّد الكتابة على البوطونات ديال كل بلاصة.<i>So text stays clear of each app\'s buttons.</i>',
   body:()=>multi(PLATS,'platforms','chips')+`<div class="sub">طول الفيديو<i>Length</i></div>`+choice(LENS,'length','chips')},
+ {id:'extras', group:'hibai', dr:'لمسات HibAI', en:'HibAI touches', help:'',
+  body:()=>`<div class="stack" style="margin-top:0">
+    ${tg('bar','خط التقدّم تحت الكابشن','Progress line under the captions')}
+    ${tg('autoRetakes','حيّد الجمل المعاودة والأخطاء بلا ما تسوّلني','Remove retakes and mistakes without asking me')}
+    ${tg('enSubs','زيد ترجمة إنجليزية (ملف srt)','Add English subtitles (.srt file)')}</div>`},
  {group:'audio', dr:'الأصوات', en:'Sound', help:'',
   body:()=>`<div class="sub" style="margin-top:0">صوت ف الخلفية<i>Background audio</i></div>${choice(BGS,'bgAudio','chips')}
    <div class="sub">مؤثرات صوتية (ووش، ضربة، نقرة)<i>Sound effects</i></div>${choice(SFXS,'sfx','chips')}`},
@@ -300,9 +321,6 @@ const STEPS=[
    ${A.endOn?`<div class="stack"><label><small>الحساب ديالك</small><input type="text" id="handle" dir="ltr" value="${esc(A.handle)}" placeholder="@yourname"></label>
     <label><small>الجملة الأخيرة — قصيرة وكتبان كبيرة</small><input type="text" id="cta" maxlength="60" value="${esc(A.cta)}" placeholder="تبعني للجزء الثاني"></label>
     <label><small>كلمة يكتبوها ف الكومنت (اختياري)</small><input type="text" id="word" value="${esc(A.word)}" placeholder="CODE"></label></div>`:''}`},
- {group:'moves', dr:'الحركات', en:'Motion moves', help:'عندي بنك فيه 100 حركة. كل فيديو كنختار ليه 3 حركات أساسية + شي حركات للحظات الخاصة.<i>A bank of 100 moves. I pick a set for each video.</i>',
-  body:()=>`<button type="button" class="toggle ${A.movesOn?'on':''}" id="movesTg" role="switch" aria-checked="${A.movesOn}"><span class="state">${A.movesOn?'بغيت نختار براسي · I\'ll pick':'ختار أنت · You pick'}</span><span class="switch"></span></button>
-   ${A.movesOn?`<p class="help">حل البنك وضغط «بغيتها» على اللي عجباتك و«لا» على اللي ما بغيتيهاش، وسجّل تما.</p><a class="btn ghost" href="/moves/?from=onboard" target="_blank" rel="noopener">حل بنك الحركات ↗</a> <span id="movesSaved" class="help"></span>`:''}`},
 ];
 let step=-1;   // -1 welcome · 0..n-1 steps · n summary · n+1 done
 
@@ -361,9 +379,9 @@ function wire(s){
     d.ondragover=e=>{e.preventDefault(); d.classList.add('over');}; d.ondragleave=()=>d.classList.remove('over');
     d.ondrop=e=>{e.preventDefault(); take(e.dataTransfer.files[0]);}; }
   const et=$('#endTg'); if(et) et.onclick=()=>{ commitText(); A.endOn=!A.endOn; mark('endCard'); render(); };
-  const mt=$('#movesTg'); if(mt) mt.onclick=()=>{ A.movesOn=!A.movesOn; mark('moves'); render(); };
+  const ht=$('#hookTg'); if(ht) ht.onclick=()=>{ commitText(); A.hookAuto=!A.hookAuto; mark('hibai'); render(); };
+  $$('[data-tg]').forEach(b=>b.onclick=()=>{ A[b.dataset.tg]=!A[b.dataset.tg]; mark('hibai'); render(); });
   const sa=$('#skipAll'); if(sa) sa.onclick=()=>{ commitText(); send({version:1,skip:true,note:A.note}); };
-  if($('#movesSaved')) movesState();
   const first=$('#card textarea, #card input[type=text], #card input[type=url]'); if(first) first.focus({preventScroll:true});
 }
 function commitText(){
@@ -371,12 +389,10 @@ function commitText(){
   if(g('note')!==null) A.note=g('note');
   if(g('url')!==null){ A.url=g('url').trim(); if(A.url) mark('identity'); }
   ['handle','cta','word'].forEach(k=>{ if(g(k)!==null){ A[k]=g(k).trim(); if(A[k]) mark('endCard'); } });
+  ['hook','keywords'].forEach(k=>{ if(g(k)!==null){ A[k]=g(k).trim(); if(A[k]) mark('hibai'); } });
 }
 function go(d){ step=Math.max(-1,Math.min(STEPS.length,step+d)); render(); window.scrollTo({top:0,behavior:'smooth'}); }
 
-async function movesState(){ try{ const st=await (await fetch('/api/state')).json(); const m=st.moves||{}; const a=(m.on||[]).length,b=(m.off||[]).length;
-  const el=$('#movesSaved'); if(el&&(a||b)) el.textContent=`مسجّل: بغيت ${a} · لا ${b}`; }catch(e){} }
-window.addEventListener('focus',()=>{ if($('#movesSaved')) movesState(); });
 
 /* ═══ Summary + save (same payload as before → 00_onboard.py) ═══ */
 function collect(){
@@ -393,20 +409,26 @@ function collect(){
     voice:{mode:'own', lang:null, gender:null, tts:null},
     bgAudio:A.bgAudio, sfx:A.sfx,
     endCard:{on:A.endOn, handle:A.handle, cta:A.cta, word:A.word},
+    hibai:{goal:A.goal, audience:A.audience, vibe:A.vibe, hook:A.hookAuto?'':A.hook, hookAuto:A.hookAuto,
+      keywords:A.keywords.split(/[,،]/).map(s=>s.trim()).filter(Boolean), bar:A.bar, autoRetakes:A.autoRetakes, enSubs:A.enSubs},
     answered:[...touched]};
 }
 const nameOf=(list,v)=>{const o=list.find(x=>x.v===v); return o?o.n:v;};
 function summary(){
   const c=colors(), pal=PALETTES.find(p=>p.id===A.palette);
+  const at=title=>STEPS.findIndex(s=>s.dr===title), yn=v=>v?'إيه':'لا';
   const rows=[
-    ['كتب شنو بغيتي',esc(A.note)||'—',0],
-    ['الألوان',A.idMode==='url'?esc(A.url||'—'):c?`${['bg','ink','acc'].map(k=>`<i style="background:${c[k]}"></i>`).join('')} ${A.idMode==='palette'&&pal?pal.n:'ديالي'}`:'أوتوماتيك',1],
-    ['اللوغو',A.logo?esc(A.logo.name):(A.logoSaved?'✓':'—'),2],
-    ['الخط',nameOf(FONTS,A.font),3],['الكابشن',nameOf(CAPS,A.capStyle),4],['الأرقام',A.digits==='arabic'?'مشرقية':'عادية',5],
-    ['الإيقاع',nameOf(PACES,A.pace),6],['نوع الفيديو',nameOf(CTYPES,A.ctype),7],
-    ['فين غادي تنشر',A.platforms.map(v=>nameOf(PLATS,v)).join(' · ')||'—',8],
-    ['المؤثرات',nameOf(SFXS,A.sfx),9],['كارط النهاية',A.endOn?esc(A.handle||A.cta||'✓'):'—',10],['الحركات',A.movesOn?'براسي':'أوتوماتيك',11],
-  ];
+    ['كتب شنو بغيتي',esc(A.note)||'—','كتب شنو بغيتي'],
+    ['الهدف',`${nameOf(GOALS,A.goal)} · ${nameOf(AUDIENCES,A.audience)}`,'شنو الهدف ديال الفيديو؟'],
+    ['الألوان',A.idMode==='url'?esc(A.url||'—'):c?`${['bg','ink','acc'].map(k=>`<i style="background:${c[k]}"></i>`).join('')} ${A.idMode==='palette'&&pal?pal.n:'ديالي'}`:'أوتوماتيك','ألوان البراند ديالك'],
+    ['اللوغو',A.logo?esc(A.logo.name):(A.logoSaved?'✓':'—'),'زيد اللوغو ولا شي صورة'],
+    ['الخط',nameOf(FONTS,A.font),'الخط'],['الكابشن',nameOf(CAPS,A.capStyle),'شكل الكابشن'],['الفيب',nameOf(VIBES,A.vibe),'الفيب ديال الفيديو'],
+    ['الأرقام',A.digits==='arabic'?'مشرقية':'عادية','الأرقام'],['الإيقاع',nameOf(PACES,A.pace),'الإيقاع'],['نوع الفيديو',nameOf(CTYPES,A.ctype),'نوع الفيديو'],
+    ['الهوك',A.hookAuto?'Claude يقترح 3':esc(A.hook||'—'),'الهوك والكلمات المهمة'],
+    ['فين غادي تنشر',A.platforms.map(v=>nameOf(PLATS,v)).join(' · ')||'—','فين غادي تنشر؟'],
+    ['لمسات HibAI',`خط التقدّم: ${yn(A.bar)} · حذف التعاودات: ${yn(A.autoRetakes)} · ترجمة: ${yn(A.enSubs)}`,'لمسات HibAI'],
+    ['المؤثرات',nameOf(SFXS,A.sfx),'الأصوات'],['كارط النهاية',A.endOn?esc(A.handle||A.cta||'✓'):'—','كارط النهاية'],
+  ].map(([k,v,t])=>[k,v,at(t)]);
   $('#card').innerHTML=`<h1 class="dr">هادشي اللي اخترتي</h1><p class="en">Here's your brief</p>
     <ul class="sum">${rows.map(([k,v,i])=>`<li><div><div class="k">${k}</div><div class="v">${v}</div></div><button type="button" data-goto="${i}">بدّل</button></li>`).join('')}</ul>
     <div class="nav"><button type="button" class="btn go" id="save">سجّل ويلاه نبداو <span class="sub2">save</span></button><button type="button" class="btn ghost" id="back">رجع</button></div>`;
@@ -454,6 +476,11 @@ async function prefill(){
   if(Array.isArray(p.orientation)&&p.orientation.length) A.orientation=[...p.orientation];
   if(Array.isArray(p.platforms)) A.platforms=[...p.platforms];
   if(p.endCard){ A.endOn=!!p.endCard.on; A.handle=p.endCard.handle||''; A.cta=p.endCard.cta||''; A.word=p.endCard.word||''; }
+  const hb=p.hibai||{};
+  ['goal','audience','vibe'].forEach(k=>{ if(hb[k]) A[k]=hb[k]; });
+  ['bar','autoRetakes','enSubs','hookAuto'].forEach(k=>{ if(typeof hb[k]==='boolean') A[k]=hb[k]; });
+  if(hb.hook) A.hook=hb.hook;
+  if(Array.isArray(hb.keywords)) A.keywords=hb.keywords.join(', ');
   (p.answered||[]).forEach(g=>touched.add(g));
   toast('حليت الإعدادات اللي سجّلتي قبل — بدّل اللي بغيتي');
 }

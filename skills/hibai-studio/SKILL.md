@@ -81,6 +81,21 @@ description: 'HibAI Studio by Hiba (@hibssssi) — edits a talking-to-camera vid
 
 اقرأ `references/start.md` ونفّذه — نفس البداية لكل الأوضاع.
 
+### 💚 أجوبة HibAI dashboard (`profile.json` ← `hibai`) — طبّقها، لا تسأل عنها مرة ثانية
+
+`python3 scripts/00_onboard.py show` يطبعها. `theme` يكتب منها `bar` و`capStill` لحاله؛ الباقي شغلك:
+
+| المفتاح | شنو تدير |
+|---|---|
+| `goal` = sell/teach/grow/brand/announce | الهوك والمشاهد وجملة كرت النهاية على حسابه: sell ← فايدة + سعر/عرض + «اطلب»، teach ← خطوات وأرقام، grow ← سؤال/«تابع للجزء 2»، brand ← قصة، announce ← تاريخ/مكان |
+| `audience` | المبتدئين ← كلمات بسيطة وشرح بصري · المحترفين ← بلا شرح الأساسيات · الكليان ← نتيجة ودليل |
+| `vibe` | energetic ← `pace` hyper + كلمات `slam` + مؤثرات أكثر · clean ← كروت مرتبة بلا مبالغة · luxury ← (`capStill` + بلا خط تقدّم، مكتوبين) حركة ناعمة وهادية · fun ← حركات مرحة (بلا ما تسخر من المتكلم) |
+| `hook` (نص) | استعمله هو الهوك المكتوب (`22_hook.py` ← `apply` بنصه) — لا تقترح غيره |
+| `hookAuto: true` | اكتب 3 هوكات من أقوى سطر ← هو يختار (الخطوة 2، `22_hook.py`) |
+| `keywords` | زيدهم لـ`hot` بـ`fixes.json` (بالكتابة اللي قالها) |
+| `autoRetakes: true` | الخطوة 5.5: احذف الجمل المعاودة والغلطات بنفسك، وبعدها ورّيه شنو حذفتي بسطر — بلا ما تسوّله قبل |
+| `enSubs: true` | بالتسليم: ترجم `ad-master.srt` للإنجليزية بنفس التوقيتات ← `ad-master.en.srt` |
+
 ---
 
 ## الخطوة 2 — خذ منه الفيديو

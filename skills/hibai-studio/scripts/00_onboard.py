@@ -465,6 +465,13 @@ def to_theme(args):
         t["outro"] = o
     else:
         log("ℹ️ ما يبي كرت نهاية ← حط \"outro\": 0 بـsfx.json")
+    # HibAI dashboard extras — the engine reads bar / capStill; the rest is for Claude (see SKILL.md)
+    hb = p.get("hibai") or {}
+    if hb.get("bar") is False:
+        t["bar"] = False
+    if hb.get("vibe") == "luxury":
+        t["capStill"] = True
+        t["bar"] = False
     set_on_acc(t)
     cp = work / "compose.html"
     if cp.exists() and "ONACC" not in cp.read_text(encoding="utf-8", errors="ignore"):
