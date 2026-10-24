@@ -1,6 +1,6 @@
 ---
 name: hibai-studio
-description: HibAI Studio by Hiba (@hibssssi) — edits a talking-to-camera video into a ready-to-post 9:16 reel or ad: pauses cut, word-timed Arabic/Darija/English captions, rich motion graphics in the user's brand colours, sound effects, subtitles, CapCut project export. Starts with the HibAI dashboard that asks what the user wants. Use when the user says "edit my video", "make a reel", "cut the silences", "add captions", "قاد ليا هاد الفيديو", "ديرلي ريل", "قطع السكتات", "زيد الكابشن", "منتج هذا المقطع", "سو من هذا الفيديو إعلان", or sends a talking-head video. Talking videos only — not for podcasts, montages, explainers without a person, covers or carousels.
+description: 'HibAI Studio by Hiba (@hibssssi) — edits a talking-to-camera video into a ready-to-post 9:16 reel or ad: pauses cut, word-timed Arabic/Darija/English captions, rich motion graphics in the user''s brand colours, sound effects, subtitles, CapCut project export. Starts with the HibAI dashboard that asks what the user wants. Use when the user says "edit my video", "make a reel", "cut the silences", "add captions", "قاد ليا هاد الفيديو", "ديرلي ريل", "قطع السكتات", "زيد الكابشن", "منتج هذا المقطع", "سو من هذا الفيديو إعلان", or sends a talking-head video. Talking videos only — not for podcasts, montages, explainers without a person, covers or carousels.'
 ---
 
 # HibAI Studio 🎬 — by Hiba (@hibssssi)
