@@ -31,7 +31,7 @@ style, pace, platform, end card…) before the edit begins.
 In Claude Code:
 
 ```
-/plugin marketplace add HibaBenzahra/hibai-studio
+/plugin marketplace add HibaBenzahra/HibAi-Editing-Studio
 /plugin install hibai-studio@hibai
 ```
 

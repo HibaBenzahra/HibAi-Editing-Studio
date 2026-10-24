@@ -35,14 +35,14 @@ if [ "$1" = "--update" ] && [ "$PLUGIN" = 1 ]; then
 fi
 if [ "$1" = "--update" ]; then
   TMP="$(mktemp -d)"; echo "⬇️ أنزّل آخر إصدار…"
-  if curl -sL -m 120 -o "$TMP/skill.zip" https://github.com/HibaBenzahra/hibai-studio/releases/latest/download/hibai-studio.zip \
+  if curl -sL -m 120 -o "$TMP/skill.zip" https://github.com/HibaBenzahra/HibAi-Editing-Studio/releases/latest/download/hibai-studio.zip \
      && unzip -q -o "$TMP/skill.zip" -d "$TMP/x" && [ -f "$TMP/x/hibai-studio/SKILL.md" ]; then
     rsync -a --delete --exclude=bin --exclude=hdr2sdr --exclude=personmask --exclude=facetrack --exclude=node_modules "$TMP/x/hibai-studio/" "$SKROOT/" \
       && echo "✅ انحدّث السكل إلى v$(cat "$SKROOT/VERSION" 2>/dev/null) — كمّل شغلك عادي" || echo "⚠️ ما قدرت أستبدل الملفات"
   else echo "⚠️ ما قدرت أنزّل التحديث — جرّب لاحقاً"; fi
   rm -rf "$TMP"; exit 0
 fi
-LATEST="$(curl -sL -m 5 https://api.github.com/repos/HibaBenzahra/hibai-studio/releases/latest 2>/dev/null | sed -n 's/.*"tag_name": *"v\([0-9.]*\)".*/\1/p' | head -1)"
+LATEST="$(curl -sL -m 5 https://api.github.com/repos/HibaBenzahra/HibAi-Editing-Studio/releases/latest 2>/dev/null | sed -n 's/.*"tag_name": *"v\([0-9.]*\)".*/\1/p' | head -1)"
 if [ -n "$LATEST" ] && [ "$LATEST" != "$LOCALV" ] && [ "$(printf '%s\n%s' "$LOCALV" "$LATEST" | sort -V | tail -1)" = "$LATEST" ]; then
   if [ "$PLUGIN" = 1 ]; then
     echo "🆕 فيه إصدار أحدث من السكل: v$LATEST (عندك v$LOCALV) — اسأل المستخدم، ولو وافق شغّل: $PLUG_UPD  (ثم جلسة جديدة)"
