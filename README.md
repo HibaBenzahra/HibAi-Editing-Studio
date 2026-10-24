@@ -53,6 +53,12 @@ Follow along on Instagram → **[@hibssssi](https://instagram.com/hibssssi)**
 for your own videos. Sharing, reselling or publishing copies or modified versions needs
 permission. See [LICENSE](LICENSE). Open-source parts keep their own licenses: see [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
 
+## Credits · شكر
+
+The editing engine is built on [video-ad-editor](https://github.com/majedphotos/video-ad-editor)
+by **Majed Alzaabi**, used under the MIT License. Thank you Majed 🙏
+شكراً لماجد على المحرك اللي بنينا عليه.
+
 ---
 
 <p align="center"><sub>Made by Hiba · HibAI</sub></p>
