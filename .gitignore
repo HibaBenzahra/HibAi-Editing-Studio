@@ -1,9 +1,9 @@
 __pycache__/
 *.pyc
-# work folders and renders
-*-edit/
-test*/
-*.mp4
-*.mov
-*.wav
 node_modules/
+# test work folders at the repo root
+/test*/
+/*-edit/
+/*.mp4
+/*.mov
+/*.wav
