@@ -75,8 +75,6 @@ numpy + scipy بس، بلا librosa — أغنية 3 دقايق بأقل من ث
 ## أ) مونتاج على النبضة (الأكثر استخداماً)
 ```bash
 python3 scripts/beat.py <work>/bg-audio.mp3 --out <work>/beats.json
-python3 scripts/12_montage.py <work> plan --dur 20 --shot 1.0 --beats <work>/beats.json   # [--on onsets|accents]
-python3 scripts/12_montage.py <work> build <work>/montage.mp4          # القطعات على فريم النبضة بالضبط
 node scripts/23_beatfx_render.js <work> <work>/montage.mp4 --audio <work>/bg-audio.mp3 --sheet
 ```
 - `--on beats` (الافتراضي) على النبضات · `accents` على الضربات القوية بس (أبطأ وأفخم) · `onsets` على أي ضربة

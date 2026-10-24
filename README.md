@@ -14,18 +14,17 @@
 
 ## مرحبا بيك ف HibAI 💚 · Welcome to HibAI
 
-HibAI Studio is a Claude skill that edits your talking-to-camera videos for you:
+HibAI Studio is a Claude skill that edits your **talking-to-camera videos** for you:
 
 - ✂️ **Cuts the pauses** and the lines you don't want (retakes spotted for you)
 - 💬 **Word-by-word captions** in Darija, Arabic, English or French, 6 caption styles
 - 🎞️ **Rich motion graphics**: 17 styles, a bank of 100 moves, cards, numbers, things passing behind your head
 - 🎨 **Your brand**: palettes or your own colours, your logo, your font, end card with your handle
 - 🔊 **Sound effects + loudness** fixed for Instagram / TikTok (-14 LUFS)
-- 🖼️ **Cover** (first frame) that reads in the profile grid, plus `.srt` subtitles and full text
-- 🎛️ Also: podcast → reels, beat-synced montage, motion explainers, CapCut project export
+- 📝 `.srt` subtitles + full text for your post caption, and an optional editable CapCut project
 
-It starts with the **HibAI dashboard**: a page that asks what you want (colours, logo, caption
-style, pace, platform, voice…) before the edit begins.
+It starts with the **HibAI dashboard**: a page that asks what you want (colours, logo, font, caption
+style, pace, platform, end card…) before the edit begins.
 
 ## Install · كيفاش تنصبو
 
