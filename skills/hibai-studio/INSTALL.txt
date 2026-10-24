@@ -12,10 +12,10 @@ INSTALL (Claude desktop app → Code tab, or Claude Code)
   3. Open a new chat, attach a talking video and say:
        "قاد ليا هاد الفيديو"  or  "edit my video"
 
-Claude checks the tools it needs (ffmpeg, Python, Whisper) and offers to install
+Claude checks the tools it needs (ffmpeg, Python, Node.js, Whisper, Chrome) and offers to install
 anything missing.
 
 Join the HibAI community: https://societiz.com/communities/learn-earn-with-ai-262551
 
 © 2026 Hiba Benzahra (HibAI). Personal use only — please don't share or resell
-this file. See LICENSE.
+this file. See LICENSE and THIRD_PARTY_NOTICES.txt.

@@ -1,0 +1,136 @@
+# -*- coding: utf-8 -*-
+"""قص السكتات + زوم مختلف لكل مقطع + تدرّج دافئ.  python3 03_cut_zoom.py <workdir>"""
+# ── توافق ويندوز/UTF-8 (مضاف) ─────────────────────────────────────
+import sys as _sys, builtins as _bi
+try:
+    _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    _sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+_real_open = _bi.open
+def _utf8_open(f, mode="r", *a, **k):
+    if "b" not in mode:
+        k.setdefault("encoding", "utf-8")
+    return _real_open(f, mode, *a, **k)
+_bi.open = _utf8_open
+# ──────────────────────────────────────────────────────────────────
+import json, subprocess, sys, os
+W=os.path.abspath(sys.argv[1]); SRC=os.path.join(W,"src.mov")
+_cj=json.load(open(os.path.join(W,"cut.json"))); k=_cj["keep"]; TAIL=float(_cj.get("tail",0) or 0)
+_tp=os.path.join(W,"theme.json")
+_th=json.load(open(_tp)) if os.path.exists(_tp) else {}
+GRADE=_th.get("grade",False)
+# 🆕 v2.5 إيقاع «هادي» (theme.json ← "pace":"calm"): زوم أخف وأقل، وما يتغيّر قبل ما تمر 4 ثوانٍ
+#    على نفس اللقطة — القطعات الكثيرة كانت تزعج (بلاغ المستخدم ٣ سبتمبر). الافتراضي زي ما هو.
+CALM=str(_th.get("pace","")).lower()=="calm"
+Z=([1.00,1.00,1.04,1.00,1.00,1.06,1.00,1.03] if CALM
+   else [1.00,1.08,1.00,1.06,1.00,1.12,1.04,1.14,1.00,1.08,1.00,1.05,1.10,1.00]); ANCH=0.30
+MINHOLD=4.0 if CALM else 0.0
+print("الإيقاع:", "هادي (زوم أخف · لا تغيير قبل 4 ثوانٍ)" if CALM else "عادي")
+p=subprocess.run(["ffprobe","-v","error","-select_streams","v:0","-show_entries",
+   "stream=width,height","-of","csv=p=0:s=x",SRC],capture_output=True,text=True).stdout.strip()
+SW,SH=[int(x) for x in p.split("x")[:2]]
+fc=[];v=[];a=[]
+zi=0; held=0.0; ZS=[]
+for i,(s,e) in enumerate(k):
+    # بالوضع الهادي: نفس الزوم يستمر لين تتجمّع 4 ثوانٍ، ثم ينتقل للي بعده
+    if i and (not CALM or held>=MINHOLD): zi+=1; held=0.0
+    held+=(e-s); ZS.append(Z[zi%len(Z)])
+# 🆕 6.0 (ريل بوبيان): الزوم كان بترتيب المقطع — تشيل/تضيف مقطع فيتزحلق زوم كل اللي بعده وتخرب إحداثيات الرسم.
+#    الحين cut.json ← "zooms" مفتاحه بداية المقطع بثواني الأصل ({"25.05":1.06, …}) — ثابت مهما تغيّر الترتيب.
+#    أول تشغيل يكتبه من الإيقاع ويقفله؛ بعدها: المقطع الموجود ياخذ زومه، والمقطع المقسوم (بداية جديدة) ياخذ زوم المقطع
+#    اللي انقسم منه (أقرب مفتاح قبله داخل مداه)، والجديد كلياً ياخذ الإيقاع. قائمة بنفس طول keep (الطريقة القديمة) تنقبل وتتحوّل.
+#    تبي تغيّر زوم مقطع؟ عدّل رقمه بـcut.json. تبي ترجع للإيقاع؟ شيل "zooms".
+_zk=lambda x: f"{float(x):.2f}"
+_zj=_cj.get("zooms")
+if isinstance(_zj,list) and len(_zj)==len(k): _zj={_zk(sg[0]):float(z) for sg,z in zip(k,_zj)}
+elif isinstance(_zj,list): print(f"⚠️ cut.json ← zooms قائمة طولها {len(_zj)} وkeep {len(k)} — تجاهلتها ورجعت للإيقاع"); _zj=None
+if isinstance(_zj,dict) and _zj:
+    _ks=sorted(_zj, key=float); _src_k=_cj.get("_zsrc",{})   # _zsrc: نهاية كل مقطع وقت القفل — نعرف منه المقطع المقسوم
+    for i,(s,e) in enumerate(k):
+        if _zk(s) in _zj: ZS[i]=float(_zj[_zk(s)]); continue
+        par=[x for x in _ks if float(x)<=s+1e-6 and s<float(_src_k.get(x,float(x)))]   # بداية جديدة داخل مقطع مقفول = جزء منه
+        if par: ZS[i]=float(_zj[par[-1]])
+else: _zj={}
+_merged={**{x:round(float(y),4) for x,y in _zj.items()},**{_zk(s):round(z,4) for (s,e),z in zip(k,ZS)}}
+_msrc={**_cj.get("_zsrc",{}),**{_zk(s):round(e,3) for s,e in k}}
+if _cj.get("zooms")!=_merged or _cj.get("_zsrc")!=_msrc:
+    _cj["zooms"]=_merged; _cj["_zsrc"]=_msrc
+    json.dump(_cj,open(os.path.join(W,"cut.json"),"w"),indent=1,ensure_ascii=False)
+    print(f"🔒 الزوم مقفول لكل مقطع ببداية وقته (cut.json ← zooms، {len(k)} مقطع) — تغيير الترتيب ما يحرّكه")
+print("الزوم لكل مقطع:", " · ".join(f"{s:.2f}→{z:g}" for (s,e),z in zip(k,ZS)))
+for i,(s,e) in enumerate(k):
+    if not (e>s>=0): sys.exit(f"❌ cut.json ← keep[{i}] = [{s}, {e}] — النهاية لازم بعد البداية")
+if any(k[i+1][0]<k[i][0] for i in range(len(k)-1)):
+    print("ℹ️ keep مو بترتيب الوقت — يتركّب بالترتيب المكتوب (مقطع من آخر الكلام قبل اللي قبله مسموح)")
+# 🆕 v3.5 فيديو بالعرض (مقابلة · بودكاست · حلقة): كان يتمطّ لـ9:16 — الحين قصّ بالطول حول الوجه لكل لقطة
+#    (بلاغ HibAI ٢٧ سبتمبر على ريلات المقابلة). الفيديو الطولي يمشي على نفس الطريق القديم بالضبط.
+if SW/SH > 0.62:
+    sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
+    import _landscape
+    PIECES=_landscape.plan(SRC,W,k,SW,SH,ZS,ANCH)
+    # مقابلة ساعة: بدل ما يفك الفيديو من أوله، يبدأ من قبل أول مقطع بثانية (نفس الفريمات بالضبط)
+    T0=max(0.0,min(s for s,e,_ in PIECES)-1.0); T1=max(e for s,e,_ in PIECES)+1.0
+    PIECES=[(s-T0,e-T0,c) for s,e,c in PIECES]
+    SEEK=["-ss",f"{T0:.3f}","-to",f"{T1:.3f}"]
+else:
+    PIECES=[]; SEEK=[]
+    for (s,e),z in zip(k,ZS):
+        cw=int(SW/z)//2*2; ch=int(SH/z)//2*2
+        x=(SW-cw)//2; y=int((SH-ch)*ANCH)
+        PIECES.append((s,e,f"crop={cw}:{ch}:{x}:{y}"))
+for i,(s,e,crop) in enumerate(PIECES):
+    fc.append(f"[0:v]trim=start={s:.4f}:end={e:.4f},setpts=PTS-STARTPTS,{crop},"
+              f"scale=1080:1920:flags=lanczos,setsar=1[v{i}]")
+    fc.append(f"[0:a]atrim=start={s:.4f}:end={e:.4f},asetpts=PTS-STARTPTS[a{i}]")
+    v.append(f"[v{i}]"); a.append(f"[a{i}]")
+fc.append("".join(v)+f"concat=n={len(PIECES)}:v=1:a=0[vc0]")
+fc.append("".join(a)+f"concat=n={len(PIECES)}:v=0:a=1[ac0]")
+# سكتة النهاية: آخر فريم يثبت والصوت يسكت (cut.json ← tail)
+fc.append(f"[vc0]tpad=stop_mode=clone:stop_duration={TAIL:.3f}[vc]" if TAIL>0 else "[vc0]null[vc]")
+fc.append(f"[ac0]apad=pad_dur={TAIL:.3f}[ac]" if TAIL>0 else "[ac0]anull[ac]")
+# التدرّج اللوني اختياري تماماً — الافتراضي مطفي (الفيديو يطلع بألوانه الأصلية)
+_g = ("eq=brightness=0.015:saturation=0.96:contrast=1.05,"
+      "colorbalance=rs=0.02:gs=0.005:bs=-0.02,") if GRADE is True else ""
+# 🔬 v3.9 "grade":"auto" → يتحسب تحت بعد تحويل HDR (نقيس الصورة اللي بتنقص فعلاً)
+if GRADE == "auto": _g = "__AUTOGRADE__"
+# ⚠️ مصدر آيفون HDR يجي موسوماً bt2020/HLG — أي متصفح يحترم الوسم ويطلّع صورة برتقالية.
+# setparams يعيد الوسم لـbt709 فتطلع الألوان طبيعية بكل مكان.
+fc.append("[vc]fps=30," + _g +
+          "setparams=color_primaries=bt709:color_trc=bt709:colorspace=bt709,format=yuv420p[vo]")
+print("التدرّج اللوني:", {True: "مفعّل", "auto": "تصحيح مقاس"}.get(GRADE, "مطفي (ألوان أصلية)"))
+fc.append("[ac]afade=t=in:st=0:d=0.06,dynaudnorm=f=200:g=5:p=0.9[ao]")
+# 🎨 HibAI (8 سبتمبر): «صفر تعديل لوني». فيديو الآيفون يجي HDR (HLG/Dolby Vision) وتحويله الساذج لـSDR يغيّر الألوان
+#    (باهت وبارد) — نحوّله بمكتبة أبل نفسها (AVFoundation) قبل أي شي، فيطلع بنفس مظهره على الجوال.
+def _hdr_to_sdr(src):
+    try:
+        ct = subprocess.run(["ffprobe","-v","error","-select_streams","v:0","-show_entries","stream=color_transfer","-of","csv=p=0",src],capture_output=True,text=True).stdout.strip().strip(",")   # ffprobe يرجّع «arib-std-b67,» بفاصلة — كانت تُسقط الكشف بصمت (13 سبتمبر)
+    except Exception: return src
+    if ct not in ("arib-std-b67","smpte2084"): return src
+    here=os.path.dirname(os.path.abspath(__file__)); binp=os.path.join(here,"hdr2sdr")
+    if not os.path.exists(binp):
+        r=subprocess.run(["swiftc","-O","-o",binp,os.path.join(here,"hdr2sdr.swift")],capture_output=True)
+        if r.returncode!=0: print("⚠️ الفيديو HDR وما قدرت أبني محوّل أبل (يحتاج أدوات Xcode) — الألوان قد تختلف"); return src
+    out=os.path.join(W,"src_sdr.mov")
+    if not os.path.exists(out):
+        print("🎨 الفيديو HDR — أحوّله SDR بمحوّل أبل حتى تبقى الألوان مثل الجوال…")
+        r=subprocess.run([binp,src,out]); 
+        if r.returncode!=0 or not os.path.exists(out): print("⚠️ فشل التحويل — أكمل بالأصل"); return src
+    return out
+SRC=_hdr_to_sdr(SRC)
+if GRADE == "auto":   # بموافقته بعد فحص 25_scopes.py: يصحّح بس المشكلة المقاسة (غامج · مايل · باهت)
+    _sp = os.path.join(W, "scopes.json")
+    if not os.path.exists(_sp):
+        subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "25_scopes.py"), W])
+    _fix = json.load(open(_sp)).get("fix", "") if os.path.exists(_sp) else ""
+    fc = [x.replace("__AUTOGRADE__", (_fix + ",") if _fix else "") for x in fc]
+    print("التصحيح المقاس:", _fix or "ما يحتاج — الصورة سليمة")
+_OUT=os.path.join(W,"cutz.mp4")
+print(f"✂️  أقص وأركّب {len(k)} مقطعاً… (بلا عدّاد — سطر واحد بالنهاية)", flush=True)
+_rc=subprocess.call(["ffmpeg","-v","error","-nostats",*SEEK,"-i",SRC,"-filter_complex",";".join(fc),
+ "-map","[vo]","-map","[ao]","-c:v","libx264","-preset","medium","-crf","16",
+ "-c:a","aac","-b:a","192k","-movflags","+faststart","-y",_OUT])
+if _rc==0:
+    _d=subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","csv=p=0",_OUT],capture_output=True,text=True).stdout.strip()
+    print(f"✅ cutz.mp4 — {float(_d or 0):.2f} ث · {len(k)} مقطع")
+sys.exit(_rc)
