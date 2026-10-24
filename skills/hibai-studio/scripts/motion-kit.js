@@ -17,9 +17,11 @@
   const eExpo = k => k >= 1 ? 1 : 1 - Math.pow(2, -10 * k);
   const eBack = k => { const s = 1.7; k = k - 1; return k * k * ((s + 1) * k + s) + 1; };
   const spring = k => k >= 1 ? 1 : 1 - Math.exp(-6 * k) * Math.cos(12 * k);
-  const C = () => G.X;                                  // كانفس المحرّك
-  const col = n => ({ BG: G.BG || '#F3EFEA', INK: G.INK || '#1F1F1D', ACC: G.ACC || '#D97757', CLAY: G.CLAY || '#BD5D3A', MUT: G.MUT || '#8A847A' })[n];
-  const font = (w, s) => w + ' ' + s + 'px ' + (G.FONT || 'Cairo');
+  // the engine declares X/BG/INK… with let/const: shared by name between scripts, but not on window
+  const C = () => (typeof X !== 'undefined' ? X : G.X);   // كانفس المحرّك
+  const ev = (n, f) => { try { return eval(n); } catch (e) { return G[n] || f; } };
+  const col = n => ({ BG: ev('BG', '#F3EFEA'), INK: ev('INK', '#1F1F1D'), ACC: ev('ACC', '#D97757'), CLAY: ev('CLAY', '#BD5D3A'), MUT: ev('MUT', '#8A847A') })[n];
+  const font = (w, s) => w + ' ' + s + 'px ' + ev('FONT', 'Cairo');
   const rrp = (x, y, w, h, r) => { const X = C(); X.beginPath(); X.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2)); };
   const fmt = n => Math.round(n).toLocaleString('en-US');
   const kfmt = v => v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1000 ? (v / 1000).toFixed(1) + 'K' : String(Math.round(v));
@@ -203,7 +205,7 @@
     const h = Math.min(130, b.h), y = b.y + (b.h - h) / 2, txt = o.text || 'موشن', n = Math.floor(cl((t - o.s - 0.4) * (o.cps || 6), 0, txt.length));
     X.save(); X.globalAlpha *= cl(k, 0, 1) * out(t, o); X.translate(b.x + b.w / 2, y + h / 2); X.scale(lerp(0.8, 1, cl(k, 0, 1.1)), lerp(0.8, 1, cl(k, 0, 1.1))); X.translate(-b.w / 2, -h / 2);
     shadow(40, 14, 0.14); X.fillStyle = '#fff'; rrp(0, 0, b.w, h, h / 2); X.fill(); noShadow();
-    X.fillStyle = col('INK'); X.font = font(800, h * 0.4); X.direction = 'rtl'; X.textAlign = 'right'; X.textBaseline = 'middle'; X.fillText(txt.slice(0, n), b.w - h * 0.5, h / 2 + 3);
+    X.fillStyle = '#16161A'; X.font = font(800, h * 0.4); X.direction = 'rtl'; X.textAlign = 'right'; X.textBaseline = 'middle'; X.fillText(txt.slice(0, n), b.w - h * 0.5, h / 2 + 3);
     if (n < txt.length || Math.floor(t * 3) % 2) { const tw = X.measureText(txt.slice(0, n)).width; X.fillStyle = col('ACC'); X.fillRect(b.w - h * 0.5 - tw - 8, h * 0.28, 5, h * 0.44); }
     const done = n >= txt.length, pul = done ? 1 + 0.08 * Math.sin((t - o.s) * 10) : 1;
     X.translate(h * 0.55, h / 2); X.scale(pul, pul); X.fillStyle = done ? col('ACC') : 'rgba(127,127,127,.3)'; X.beginPath(); X.arc(0, 0, h * 0.36, 0, 7); X.fill();
