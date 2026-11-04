@@ -968,7 +968,8 @@
     X.fillStyle = P.bg; X.fillRect(0, 0, 1080, 1920);
     const g = X.createRadialGradient(540, 860, 50, 540, 860, 900); g.addColorStop(0, 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(0,0,0,0)'); X.fillStyle = g; X.fillRect(0, 0, 1080, 1920);
     const kt = at(t, o.s + 0.7, o.s + 1.3, 'expoOut');
-    if (o.title !== null) ctx.text(X, o.title || 'من جوالك', 540, 1620 - 40 * (1 - kt), { family: 'display', size: 120, color: P.ink, alpha: kt * k, maxWidth: 900 });
+    // only the title the scene passes (no invented default), and above Instagram's caption area
+    if (o.title) ctx.text(X, o.title, 540, 1470 - 40 * (1 - kt), { family: 'display', size: 120, color: P.ink, alpha: kt * k, maxWidth: 900 });
     const drawPhone = (Y, rr, kb) => {
       if (kb > 0.001) { Y.save(); Y.globalAlpha = kb; const b = { x: rr.x - bez * kb, y: rr.y - bez * kb, w: rr.w + 2 * bez * kb, h: rr.h + 2 * bez * kb };
         const bg = Y.createLinearGradient(b.x, 0, b.x + b.w, 0); bg.addColorStop(0, '#2A2A2C'); bg.addColorStop(0.5, '#111113'); bg.addColorStop(1, '#2A2A2C'); Y.fillStyle = bg; Y.beginPath(); Y.roundRect(b.x, b.y, b.w, b.h, rad + bez * kb); Y.fill();
