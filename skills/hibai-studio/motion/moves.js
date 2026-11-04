@@ -242,11 +242,13 @@
       X.save(); X.translate(540, pick(o, 'y', 560) + slot * gap); X.scale(s, s);
       X.shadowColor = 'rgba(27,26,23,.13)'; X.shadowBlur = 40; X.shadowOffsetY = 14; X.fillStyle = o.card || '#FFFFFF';
       X.beginPath(); X.roundRect(-440, -80, 880, 160, 40); X.fill(); X.shadowColor = 'transparent';
-      X.fillStyle = i === shown - 1 ? P.acc : P.ink; X.beginPath(); X.roundRect(300, -50, 100, 100, 28); X.fill();
+      // text sits on a light card: use the darker theme colour so light (dark-theme) inks stay readable
+      const dk = o.card ? P.ink : darker(P.ink, P.bg), soft = o.card ? P.mut : 'rgba(0,0,0,.55)';
+      X.fillStyle = i === shown - 1 ? P.acc : dk; X.beginPath(); X.roundRect(300, -50, 100, 100, 28); X.fill();
       ctx.text(X, String(i + 1), 350, 22, { family: 'num', weight: 800, size: 60, color: '#fff', dir: 'ltr' });
-      ctx.text(X, N[i][0], 260, N[i][1] ? -6 : 16, { family: 'body', weight: 700, size: 48, align: 'right', color: P.ink, maxWidth: 620 });
-      if (N[i][1]) ctx.text(X, N[i][1], 260, 46, { family: 'body', weight: 400, size: 36, align: 'right', color: P.mut, maxWidth: 620 });
-      if (o.tag !== null) ctx.text(X, o.tag || 'الحين', -400, -20, { family: 'body', weight: 400, size: 30, align: 'left', color: P.mut });
+      ctx.text(X, N[i][0], 260, N[i][1] ? -6 : 16, { family: 'body', weight: 700, size: 48, align: 'right', color: dk, maxWidth: 620 });
+      if (N[i][1]) ctx.text(X, N[i][1], 260, 46, { family: 'body', weight: 400, size: 36, align: 'right', color: soft, maxWidth: 620 });
+      if (o.tag !== null) ctx.text(X, o.tag || 'الحين', -400, -20, { family: 'body', weight: 400, size: 30, align: 'left', color: soft });
       X.restore();
     }
   };
