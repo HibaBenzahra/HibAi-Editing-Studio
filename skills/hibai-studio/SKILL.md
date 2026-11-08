@@ -33,7 +33,8 @@ Never jump to the final render. Every edit goes through these gates, in this ord
 2. **Gate 1 — the script.** Transcribe, fix the Darija, then print the **whole** numbered script in the chat
    (`10_script_edit.py show`). The user confirms, fixes words, or drops lines. No scene design before this «OK».
 3. **Gate 2 — the storyboard.** Plan every scene, render **one frame from the middle of each scene**
-   (`python scripts/32_midframes.py <work>` + `07_contact_sheet.sh`) and send it with a numbered table:
+   (`node scripts/04_render_frames.js <work> preview <t1> <t2> …` then `python scripts/43_storyboard.py <work> <t1> <t2> … --cols 5`,
+   which writes `storyboard.jpg`, numbered, any number of frames) and send it with a numbered table:
    `# · time · what's said · layout (full / split / card / no-face) · visual (motion, logo, UI, screenshot) · transition in · sound`.
    - Short/simple video → at least **6** frames. More scenes → **one frame per scene, 12 or more** — never hide scenes.
    - The user approves or asks for changes → fix → show again. Only after «OK» render the full video.
@@ -76,6 +77,20 @@ scene (`nocap`). Rule of thumb: caption = what's said, motion = what it looks li
    real layout — chat bubbles, buttons, menus), using the phone/laptop mockups and glass cards.
 5. Still missing → ask the user for a screenshot or screen recording (things behind a login).
 - Brand colours: logos keep their real colour; everything else (cards, icons, backgrounds) follows `theme.json`.
+
+### E2) The HibAI kit — real-asset scenes in one line (`scripts/hibai-kit.js`, loaded automatically)
+Use these before writing a scene by hand (all in the theme colours, safe-zone sized; layouts: `R_DOWN` visuals in y 160–600,
+`R_LOWER` visuals in y 160–1180):
+- `HK.browser(t,{img,url,zoom:{s,e,cx,cy,scale},hl:{x,y,w,h,at,style}})` — screenshot in a browser · zoom in → highlight
+  (rect / circle / underline) → zoom out. Coordinates are screenshot pixels.
+- `HK.phoneShot(t,{img,s,e})` — a mobile screenshot in a phone · `HK.versus(t,{left:{icon,ok},right:{icon,ok}})` — ✓ vs ✗
+- `HK.flow(t,{from,to,items})` — files/icons flying between two tiles · `HK.orbit(t,{center,items})` — icons orbiting a logo
+- `HK.desktopApp(t,{brand,name,tabs,clickTab,clickAt,before,after,progress})` — an app window rebuilt in code, the pointer
+  clicks a tab, a progress bar fills · `HK.pointer`, `HK.tint` (recolour an icon), `HK.img`, `HK.appear`
+- Start the scene script with `HK.load([...files in assets/])`. Example: a full real-asset reel in ~15 lines → see the header of
+  `scripts/hibai-kit.js`.
+- ⚠️ Scene scripts share one page with the engine: never declare top-level names the engine already uses (`draw`, `eio`, `X`…) —
+  wrap helpers inside `MV.ready(()=>{…})`. A broken script now prints `❌ SCRIPT ERROR` in the render log — never ignore it.
 
 ### F) Screenshots & screen recordings
 Never just paste them: **zoom in** on the part that matters, **highlight** it (rectangle, circle or underline in the accent colour,

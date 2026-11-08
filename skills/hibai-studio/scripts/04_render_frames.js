@@ -41,7 +41,7 @@ function findChrome(){
 const CHROME=findChrome();
 /* 🎞️ معرض الحركات: compose.html يطلب moves.js + moves-compose.js من مجلد الشغل — لو ناقصين ننسخهم من السكل قبل الفتح
    (بدونهم FX ما يتعرّف والمشهد يتخطّى). وcompose قديم بلا الوسمين: نركّبهم بعد الفتح عشان FX/MV يشتغلون وقت الرسم. */
-const MOVES_SRC={'moves.js':path.join(__dirname,'..','motion','moves.js'),'moves-compose.js':path.join(__dirname,'moves-compose.js'),'styles.js':path.join(__dirname,'..','motion','styles.js')};
+const MOVES_SRC={'moves.js':path.join(__dirname,'..','motion','moves.js'),'moves-compose.js':path.join(__dirname,'moves-compose.js'),'styles.js':path.join(__dirname,'..','motion','styles.js'),'hibai-kit.js':path.join(__dirname,'hibai-kit.js')};
 function movesCopy(){ const h=fs.readFileSync(W+'compose.html','utf8');
   for(const [f,src] of Object.entries(MOVES_SRC)) if(h.includes('src="'+f+'"')&&!fs.existsSync(W+f)&&fs.existsSync(src)){ fs.copyFileSync(src,W+f); console.log('🎞️ نسخت '+f+' لمجلد الشغل'); }
   /* 74 آية بسكينة: الخط العثماني يتحمّل من مجلد الشغل (MV.needFont) */
@@ -49,7 +49,7 @@ function movesCopy(){ const h=fs.readFileSync(W+'compose.html','utf8');
   /* 🎨 بنك الستايلات: MV.useStyle يحمّل خطوط الستايل من مجلد الشغل */
   if(h.includes('useStyle')){ const FD=path.join(__dirname,'..','motion','fonts'); for(const f of fs.readdirSync(FD).filter(f=>/\.ttf$/.test(f)&&!/Quran/.test(f))) if(!fs.existsSync(W+f)) fs.copyFileSync(path.join(FD,f),W+f); } }
 async function movesInject(p){ if(await p.evaluate(()=>!!(window.FX&&window.MV&&window.STYLES))) return;
-  for(const f of ['styles.js','moves.js','moves-compose.js']){ const src=[W+f,MOVES_SRC[f]].find(x=>fs.existsSync(x)); if(src) await p.addScriptTag({path:src}); } }
+  for(const f of ['styles.js','moves.js','moves-compose.js','hibai-kit.js']){ const src=[W+f,MOVES_SRC[f]].find(x=>fs.existsSync(x)); if(src) await p.addScriptTag({path:src}); } }
 (async()=>{
   const puppeteer=resolvePuppeteer();
   const mode=process.argv[3]||'all';
@@ -67,6 +67,7 @@ async function movesInject(p){ if(await p.evaluate(()=>!!(window.FX&&window.MV&&
   const _seen=new Set(), perr=m=>{ if(_seen.has(m)) return; _seen.add(m); process.stderr.write('[compose] '+m+'\n'); };
   p.on('pageerror',e=>perr('PAGEERR '+e.message));
   p.on('console',m=>{ if(m.type()==='error') perr(m.text()); });
+  p.on('pageerror',e=>console.log('[compose] ❌ SCRIPT ERROR — scenes in this script will not draw: '+e.message));   /* syntax/runtime error in compose.html (e.g. a name declared twice) */
   await p.setViewport({width:1080,height:1920,deviceScaleFactor:1});
   await p.setCacheEnabled(false);   // لا تقرأ نسخة مخبّأة من compose.html
   movesCopy();
