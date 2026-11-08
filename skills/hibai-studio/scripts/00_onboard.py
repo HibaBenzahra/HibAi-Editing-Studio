@@ -485,7 +485,15 @@ def to_theme(args):
     t.setdefault("grade", False)
     t.setdefault("badgeUntil", 0)
     t.setdefault("faceAnchor", 0.30)
+    # HibAI captions: words per screen (2 = 1–2 · 4 = 3–4), smaller size, Latin words in a Latin font
+    hb = p.get("hibai") or {}
+    t["capWords"] = int(hb.get("capWords") or t.get("capWords") or 4)
+    t.setdefault("capScale", 0.8)
+    t["latinFont"] = hb.get("latinFont") or t.get("latinFont") or "Inter"
     atomic_write(tp, json.dumps(t, ensure_ascii=False, indent=2))
+    # local fonts → <work>/fonts + fontFile / latinFontFile (works offline)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("39_fonts.py")), str(work)])
+    t = json.loads(tp.read_text(encoding="utf-8"))
     log("✅ كتبت " + str(tp) + ("" if not missing_colors else "  ⚠️ بلا ألوان — ناقص bg/ink/acc (رابط أو تلقائي): طلّعها قبل الرسم"))
     print(json.dumps(t, ensure_ascii=False, indent=2))
     return 0

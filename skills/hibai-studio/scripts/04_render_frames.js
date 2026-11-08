@@ -96,7 +96,7 @@ async function movesInject(p){ if(await p.evaluate(()=>!!(window.FX&&window.MV&&
     await document.fonts.ready;
     const faces=(await document.fonts.load('400 60px '+f,'عربي')).length;   /* صفر = الخط ما انعرف أصلاً (ولا check يكشفه) */
     return faces>0 && W.every(w=>document.fonts.check(w+' 60px '+f,'عربي'));
-  },FF);
+  },await p.evaluate(()=>FONT));   /* the engine may register a local font under an alias */
   if(!fontOK) console.log('⚠️ الخط '+FF+' ما اكتمل تحميله — الرسم بيكمل بخط بديل');
   const grab=async(t,file,q)=>{
     const i=Math.min(NVF,Math.max(1,Math.round(t*FPS)+1));
@@ -147,7 +147,7 @@ async function movesInject(p){ if(await p.evaluate(()=>!!(window.FX&&window.MV&&
     for(let i=i0;i<i1;i++){
       const f=W+'out/'+String(i).padStart(5,'0')+'.jpg';
       if(mode==='all'&&!force&&done(f)){skipped++;continue;}
-      await grab(i/FPS,f,0.95); drawn++;
+      await grab(i/FPS,f,0.98); drawn++;
       if(drawn%150===1)console.log('فريم',i,'/',i1);
     }
     if(skipped)console.log('تخطّى',skipped,'فريماً جاهزاً (استئناف) — --force يعيد الكل');

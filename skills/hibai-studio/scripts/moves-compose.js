@@ -76,14 +76,14 @@
   const noise1 = (x, seed = 0) => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return lerp(hash01(i, seed), hash01(i + 1, seed), u) * 2 - 1; };
 
   /* ── الخط والألوان من الثيم (globals compose: FONT BG INK ACC CLAY MUT) ── */
-  const theme = () => ({ FONT: typeof FONT !== 'undefined' ? FONT : 'Cairo' });   // FONT = خط theme.json (يتعيّن داخل init)
+  const theme = () => ({ FONT: typeof FONT !== 'undefined' ? FONT : 'Cairo', LATIN: typeof LATIN_FONT !== 'undefined' ? LATIN_FONT : 'Inter' });   // FONT = خط theme.json (يتعيّن داخل init)
   const ALIAS = { display: 'display', body: 'body', num: 'num', Lalezar: 'display', 'IBM Plex Sans Arabic': 'body', Inter: 'num', cairo: 'body', kufi: 'display' };
   function fontStr(family = 'body', weight = 700, size = 80) {
     const role = ALIAS[family];
     if (!role) return `${weight} ${size}px "${family}"`;           // عائلة مو معروفة: نمرّرها كما هي
     if (STY && STY.fonts[role]) return `${weight} ${size}px "${STY.fonts[role]}"`;
     const w = role === 'display' ? Math.max(800, +weight || 0) : weight;
-    return `${w} ${size}px "${theme().FONT}"`;
+    return `${w} ${size}px "${theme().FONT}", "${theme().LATIN}"`;   // Latin letters/digits the Arabic font lacks come from the Latin font
   }
   const applyFont = (X, o) => { X.font = o.font || fontStr(o.family || 'body', o.weight ?? 700, o.size || 80); };
   let STY = null;   // 🎨 MV.useStyle(spec) — ستايل من motion/styles.js (ألوانه وخطوطه تغلب ثيم compose)

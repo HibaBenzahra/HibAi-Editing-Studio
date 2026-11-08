@@ -18,6 +18,8 @@ let BAR=true;         /* شريط التقدّم (theme.json ← bar:false يش�
 let BADGE_UNTIL=0;    /* ⛔ شارة الحساب مطفية (قرار HibAI ٢ سبتمبر): اسمه ظاهر بالمنصة نفسها
                          وبكرت النهاية، وفوق الشاشة مساحة للرسم. theme.json ← badgeUntil:3 تعيدها */
 let CAPS=[],VEND=0,OUTRO=0,DUR=0;
+/* HibAI: captions under the jaw · words per screen · size · Latin words in a Latin font */
+let CAP_JAW=null, CAP_WORDS=0, CAP_SCALE=0.8, LATIN_FONT='Inter';
 let THEME_RAW=null;
 function init(d){
   CAPS=d.cards;VEND=d.total;OUTRO=d.outro;DUR=VEND+OUTRO;
@@ -26,6 +28,10 @@ function init(d){
   BOUNCE=!!(t.motion&&t.motion.bounce);
   BG=t.bg||BG; INK=t.ink||INK; ACC=t.acc||ACC; CLAY=t.clay||CLAY; MUT=t.mut||MUT;
   FONT=t.font||FONT; HANDLE=t.handle||HANDLE; CAPSTYLE=t.capStyle||CAPSTYLE;
+  LATIN_FONT=t.latinFont||LATIN_FONT;
+  if(typeof t.capWords==='number') CAP_WORDS=t.capWords;      /* 2 = 1–2 words at a time · 4 = 3–4 · 0 = whole lines */
+  if(typeof t.capScale==='number') CAP_SCALE=t.capScale;      /* caption size (1 = the old big size) */
+  FONT=_fontFace(FONT,t.fontFile); LATIN_FONT=_fontFace(LATIN_FONT,t.latinFontFile);
   ONACC=(typeof t.onAcc==='string'&&/^#[0-9A-Fa-f]{6}$/.test(t.onAcc))?t.onAcc:null;   /* لون النص فوق التمييز (صفحة التعارف تكتبه) — بدونه القاعدة القديمة */
   if(typeof t.faceAnchor==='number') FACE_ANCH=t.faceAnchor;
   if(typeof t.cardZoom==='number') CARD_ZOOM=t.cardZoom;
@@ -37,7 +43,7 @@ function init(d){
   if(typeof t.hookZoom==='number') HOOK_END=t.hookZoom;
   if(t.outro){ OUTRO_T={...OUTRO_T,...t.outro}; if(Array.isArray(t.outro.chips)) RECAP=t.outro.chips.map(c=>[c]); }   /* v3.5: كرت الختام من الثيم (الافتراضي إعلان السكل — ريل بودكاست لازم يغيّره) */   /* زوم الهوك + انتقال بعده (ثواني) — شوف hookZoom تحت */
   if(t.logo){const L=document.getElementById('LOGO'); if(L.getAttribute('src')!==t.logo) L.src=t.logo;}
-  if(FONT!=='Cairo'){const l=document.createElement('link');l.rel='stylesheet';
+  if(FONT!=='Cairo'&&!t.fontFile){const l=document.createElement('link');l.rel='stylesheet';
     l.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(FONT)+':wght@400;600;700;800;900&display=swap';
     document.head.appendChild(l);}
   if(d.studio){ const st=d.studio;
@@ -48,6 +54,7 @@ function init(d){
     if(Array.isArray(st.scenes)&&st.scenes.length) SCENES=st.scenes.map(x=>({...x,collage:x.m==='R_COLLAGE'||!!x.collage,m:(typeof x.m==='string'?rectByName(x.m):x.m)}));
     if(Array.isArray(st.brollClips)) BROLL=st.brollClips;
     if(typeof st.cardTop==='number') CARD_TOP=st.cardTop;
+    if(Array.isArray(st.capJaw)&&st.capJaw.length) CAP_JAW=st.capJaw;   /* 38_jaw.py */
     if(st.outro){ OUTRO_T={...OUTRO_T,...st.outro}; if(Array.isArray(st.outro.chips)) RECAP=st.outro.chips.map(c=>[c]); }
     if(Array.isArray(st.stickers)) STICK=st.stickers;
     BEHIND_OFF=Array.isArray(st.behindOff)?st.behindOff:[];
@@ -258,11 +265,34 @@ function bar(t){if(!BAR)return;   /* theme.json ← bar:false = بلا شريط 
   X.save();X.globalAlpha=a;const y=_lowb?Math.max(200,_rb.y-30):1492,h=7,mx=60;
   X.fillStyle=cINK(0.13);rr(mx,y,W-mx*2,h,h/2);X.fill();
   X.fillStyle=ACC;rr(mx,y,(W-mx*2)*cl(t/VEND,0,1),h,h/2);X.fill();X.restore();}
+/* ---------- HibAI caption helpers ---------- */
+/* a local font file (fonts/…) is loaded with @font-face — no internet needed */
+/* registered under a space-free alias: canvas font strings drop multi-word family names */
+function _fontFace(fam,file){ if(!fam||!file) return fam; const al='HBF_'+String(fam).replace(/[^A-Za-z0-9]/g,''); const st=document.createElement('style');
+  st.textContent='@font-face{font-family:"'+al+'";src:url("'+file+'");font-weight:100 900;font-display:block}';
+  document.head.appendChild(st); document.fonts.load('700 60px '+al,'عربي Ab 12').catch(()=>0); return al; }
+/* Latin words (no Arabic letters) use the Latin font; Arabic/Darija use the theme font */
+const _isLatin=w=>/[A-Za-z]/.test(w)&&!/[\u0600-\u06FF]/.test(w);
+function wfont(w,wt,fs){ return wt+' '+Math.round(fs)+'px '+(_isLatin(w)?'"'+LATIN_FONT+'", '+FONT:FONT+', "'+LATIN_FONT+'"'); }
+/* chin height at time t (full-screen shots only) → caption top just under it */
+function jawAt(t){ if(!CAP_JAW) return null; let lo=0,hi=CAP_JAW.length-1; if(t<CAP_JAW[0][0]-0.4||t>CAP_JAW[hi][0]+0.4) return null;
+  while(hi-lo>1){const m=(lo+hi)>>1; if(CAP_JAW[m][0]<=t) lo=m; else hi=m;}
+  const a=CAP_JAW[lo],b=CAP_JAW[hi]; if(Math.abs(b[0]-a[0])>1) return Math.abs(t-a[0])<Math.abs(t-b[0])?a[1]:b[1];
+  const k=b[0]>a[0]?cl((t-a[0])/(b[0]-a[0]),0,1):0; return a[1]+(b[1]-a[1])*k; }
+const CAP_MAX_BOTTOM=1480;   /* safe zone: nothing below 1500 */
+/* the caption top for a full-screen shot: under the jaw, but the whole caption stays above the safe line */
+function capTop(t,h,def){ const j=jawAt(t); if(j==null) return def; return Math.min(j+26, CAP_MAX_BOTTOM-h); }
+/* words per screen: the chunk of N words that holds the spoken word */
+function _chunk(c,t){ if(!CAP_WORDS||c.w.length<=CAP_WORDS) return c; const ch=[];
+  for(let i=0;i<c.w.length;){ let n=CAP_WORDS; if(/^[0-9٠-٩%]+$/.test(c.w[Math.min(i+n-1,c.w.length-1)].t)&&i+n<c.w.length) n++;  /* number + unit stay together */
+    ch.push(c.w.slice(i,i+n)); i+=n; }
+  let k=ch.findIndex((g,i)=>t>=g[0].s&&(i===ch.length-1||t<ch[i+1][0].s)); if(k<0) k=t<ch[0][0].s?0:ch.length-1;
+  return {...c,w:ch[k],s:Math.max(c.s,ch[k][0].s-0.05),e:k===ch.length-1?c.e:ch[k+1][0].s}; }
 /* ---------- captions ---------- */
-const FS=55,LH=79,MAXW=730,GAP=16,PADX=44,PADY=30;
+let FS=55,LH=79;const MAXW=730,GAP=16,PADX=44,PADY=30;
 const MAXLINES=2;   /* أقصى أسطر بكرت الكابشن — فوقها تنقسم الجملة صفحات */  /* 730: يخلي الكرت ينتهي قبل عمود أزرار انستقرام */
-function layout(ws){X.font='800 '+FS+'px '+FONT;
-  const it=ws.map(w=>({...w,w:X.measureText(w.t).width}));const L=[];let c=[],cw=0;
+function layout(ws){
+  const it=ws.map(w=>{X.font=wfont(w.t,800,FS);return {...w,w:X.measureText(w.t).width};});const L=[];let c=[],cw=0;
   for(const i of it){const add=c.length?i.w+GAP:i.w;
     if(cw+add>MAXW&&c.length){L.push({items:c,w:cw});c=[i];cw=i.w;}else{c.push(i);cw+=add;}}
   if(c.length)L.push({items:c,w:cw});return L;}
@@ -289,6 +319,8 @@ function caption(t){
   if(collageActive(t)) return;   /* الكولاج يرسم كلماته قصاصات */
   let c=CAPS.find(c=>t>=c.s&&t<c.e); if(!c)return;
   c=_capRest(c,t); if(!c) return;   /* 6.0: الكلمات اللي طلعت ورا الشخص/«طبقات» ما تنعاد بالكابشن */
+  c=_chunk(c,t);   /* HibAI: 1–2 or 3–4 words at a time */
+  FS=Math.round(55*Math.max(0.75,CAP_SCALE/0.8)); LH=Math.round(FS*1.44);
   const lt=t-c.s,rt=c.e-t;let a=1,dy=0,sc=1;   /* capStill: الدخول والطلعة بالشفافية بس — بلا صعود ولا تكبير */
   if(lt<0.2){const k=lt/0.2;a=ease(k);if(!CAP_STILL){dy=(1-ease(k))*28;sc=0.93+0.07*back(k);}}
   if(rt<0.13){const k=rt/0.13;a=k;if(!CAP_STILL)dy=-(1-k)*10;}
@@ -338,6 +370,7 @@ function caption(t){
       if(f.slam!==undefined&&f.slam<1){ /* ضربة: الكلمة تهبط ضخمة من فوق بالنص وتضرب ثم تصغر لمكانها */
         const k=f.slam; const big=k<0.35; const sc0=big?(3.2-2.0*ease(k/0.35)):lerp(1.2,1,ease((k-0.35)/0.65)); const cy0=big?lerp(760,cy,ease(k/0.35)):cy; const jit=(k>0.33&&k<0.5)?Math.sin(k*300)*8*(1-(k-0.33)/0.17):0;
         X.save(); X.translate(540+jit,cy0); X.scale(sc0,sc0); X.translate(-540,-cy0); X.shadowColor='rgba(0,0,0,0.8)';X.shadowBlur=30;X.shadowOffsetY=8; X.fillStyle=ACC; X.textAlign='center'; X.fillText(i.t,540,cy0); X.restore(); return; }
+      X.font=wfont(i.t,900,fs);
       X.save(); const cxw=x-i.w/2; X.translate(cxw+f.dx,cy+lift+f.dy); X.scale(f.ps,f.ps); X.translate(-cxw,-(cy+lift));
       if(f.clip<1){X.beginPath();X.rect(x-i.w*f.clip-4,cy-fs,i.w*f.clip+8,fs*2);X.clip();}
       if(CAPSTYLE==='bar'&&act){ X.fillStyle=ACC; rr(x-i.w-16,cy+lift-fs*0.66,i.w+32,fs*1.28,18); X.fill(); }
@@ -349,17 +382,17 @@ function caption(t){
       X.restore(); };
     if(CAPSTYLE==='big'){ /* كلمة وحدة ضخمة بالنص — الكلمة المنطوقة الحين */
       const cur=c.w.filter(w=>t>=w.s).slice(-1)[0]; if(!cur) return;
-      let fs=170; X.font='900 '+fs+'px '+FONT; while(X.measureText(cur.t).width>960&&fs>70){fs-=10;X.font='900 '+fs+'px '+FONT;}
+      let fs=Math.round(150*CAP_SCALE); X.font=wfont(cur.t,900,fs); while(X.measureText(cur.t).width>900&&fs>60){fs-=8;X.font=wfont(cur.t,900,fs);}
       const wv={...cur,w:X.measureText(cur.t).width}; const k=ease(Math.min(1,(t-cur.s)/0.18));
-      const _Rb=vtarget(t), _yb=(_Rb.y>700&&!_Rb.off)?Math.max(260,_Rb.y-120):1200;   /* 23 سبتمبر: ما يطيح على وجهه بوضع الكرت */
+      const _Rb=vtarget(t), _yb=(_Rb.y>700&&!_Rb.off)?Math.max(260,_Rb.y-120):capTop(t,fs*1.2,1200-fs*0.6)+fs*0.6;   /* 23 سبتمبر: ما يطيح على وجهه بوضع الكرت */
       X.save(); X.globalAlpha=a*k; X.textAlign='right'; X.textBaseline='middle';
       const bs=CAP_STILL?1:0.85+0.15*k;   /* capStill: الكلمة الضخمة تطلع بالشفافية بس */
       X.translate(540,_yb); X.scale(bs,bs); X.translate(-540,-_yb);
       drawWord(wv,540+wv.w/2,_yb,fs); X.restore(); return; }
-    let FS2=84, LL=null; const src=CAPSTYLE==='type'?c.w.filter(w=>t>=w.s):c.w;
+    let FS2=Math.round(84*CAP_SCALE), LL=null; const src=CAPSTYLE==='type'?c.w.filter(w=>t>=w.s):c.w;
     if(!src.length) return;
-    for(let tr=0;tr<6;tr++){ X.font='900 '+FS2+'px '+FONT;
-      const it=c.w.map(w=>({...w,w:X.measureText(w.t).width})); const L2=[]; let cc=[],cw=0;
+    for(let tr=0;tr<6;tr++){
+      const it=c.w.map(w=>{X.font=wfont(w.t,900,FS2);return {...w,w:X.measureText(w.t).width};}); const L2=[]; let cc=[],cw=0;
       for(let k=0;k<it.length;k++){const i=it[k];const add=cc.length?i.w+GAP2:i.w;
         const glue=(k+1<it.length&&isNum(i))?it[k+1].w+GAP2:0;   /* الرقم ووحدته بسطر واحد */
         if(cw+add+glue>MAXW2&&cc.length){L2.push({items:cc,w:cw});cc=[i];cw=i.w;}else{cc.push(i);cw+=add;}}
@@ -368,7 +401,7 @@ function caption(t){
     const LH2=Math.round(FS2*1.33); const bh2=LL.length*LH2;
     /* ⛔ قاعدة HibAI (23 سبتمبر): الكابشن ما ينكتب على وجهه أبداً. الستايلات بلا كرت كانت تثبّت عند 1400
        مهما كان وضع الفيديو، فبوضع الكرت (R_DOWN/R_LOWER) تطيح الكلمات على وجهه. الحين تطلع فوق الكرت. */
-    const _Rc=vtarget(t), by2=(_Rc.y>700&&!_Rc.off)?Math.max(200,_Rc.y-46-bh2):(1400-bh2);
+    const _Rc=vtarget(t), by2=(_Rc.y>700&&!_Rc.off)?Math.max(200,_Rc.y-46-bh2):capTop(t,bh2,1400-bh2);
     X.save();X.globalAlpha=a;X.translate(540,by2+bh2/2+dy);X.scale(sc,sc);X.translate(-540,-(by2+bh2/2));
     X.textAlign='right';X.textBaseline='middle'; X.font='900 '+FS2+'px '+FONT;
     let lastX=null,lastY=null;
@@ -380,13 +413,13 @@ function caption(t){
   const _R=vtarget(t), LOW=_R.y>700&&!_R.off;   /* R_OFF: الكابشن يبقى تحت عند 1460 · مستطيل الهدف لا المتحرّك: الكابشن يثبت بمكانه من أول فريم بلا قفزة */          /* R_DOWN أو R_LOWER → الكابشن فوق كرت الفيديو */          /* الفيديو تحت → الكابشن فوقه */
   const CUT=(cutoutActive(t)||headoutActive(t))&&PTOP>200;   /* الكابشن فوق راسه بالوضعين */
   const SEAM=0;   /* ⛔ 23 سبتمبر: كان الكرت يركب 42٪ منه على حافة الفيديو فيغطي جبهة المتحدث — الحين فوق الكرت بالكامل */
-  const bx=540-bw/2,by=(CUT?PTOP-46:(LOW?_R.y-60+SEAM:1460))-bh;   /* 1460 عادةً · وعلى حافة الفيديو بوضع «الفيديو تحت» */
+  const bx=540-bw/2,by=CUT?PTOP-46-bh:(LOW?_R.y-60+SEAM-bh:capTop(t,bh,1460-bh));   /* 1460 عادةً · وعلى حافة الفيديو بوضع «الفيديو تحت» */
   X.save();X.globalAlpha=a;X.translate(540,by+bh/2+dy);X.scale(sc,sc);X.translate(-540,-(by+bh/2));
   sh(48,20,0.30);X.fillStyle=cBG(0.96);rr(bx,by,bw,bh,38);X.fill();nsh();
   X.strokeStyle=cINK(0.09);X.lineWidth=2.5;rr(bx,by,bw,bh,38);X.stroke();
-  X.font='800 '+FS+'px '+FONT;X.textAlign='right';X.textBaseline='middle';
+  X.textAlign='right';X.textBaseline='middle';
   L.forEach((ln,li)=>{let x=540+ln.w/2;const cy=by+PADY+LH*li+LH/2;
-    for(const i of ln.items){const act=t>=i.s&&t<i.e,sp=t>=i.s;let lift=0;
+    for(const i of ln.items){X.font=wfont(i.t,800,FS);const act=t>=i.s&&t<i.e,sp=t>=i.s;let lift=0;
       if(act&&!CAP_STILL){const k=Math.min(1,(t-i.s)/0.1);lift=-5*Math.sin(k*Math.PI);}   /* capStill: تتلوّن بمكانها بلا قفزة */
       if(i.hot&&sp){const k=Math.min(1,(t-i.s)/0.16),gw=(i.w+28)*ease(k),gh=FS+21;
         X.fillStyle=ACC;rr(x+14-gw,cy-gh/2+lift,gw,gh,15);X.fill();X.fillStyle=onACC();}

@@ -212,7 +212,7 @@ if os.path.exists(P("sfx.json")):
 print(f"""
 ✅ تم. الحين أعد بناء الفيديو:
    python scripts/03_cut_zoom.py {W}
-   mkdir -p {W}/vfr && ffmpeg -v error -i {W}/cutz.mp4 -vf fps=30 -q:v 3 -y {W}/vfr/%05d.jpg
+   mkdir -p {W}/vfr && ffmpeg -v error -i {W}/cutz.mp4 -vf "fps=30,scale=in_color_matrix=bt709:out_color_matrix=bt601:out_range=pc" -q:v 1 -qmin 1 -y {W}/vfr/%05d.jpg
    node scripts/04_render_frames.js {W} all --force     (أو 04b_remotion.sh {W} render)
 ⚠️ لو كنت مصمّماً مشاهد بأوقات ثابتة — أوقاتها انزاحت، راجعها.
 ↩️ للتراجع: python scripts/10_script_edit.py {W} undo""")

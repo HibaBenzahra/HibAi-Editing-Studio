@@ -15,7 +15,7 @@
 (function(){
   if(window.HookCard&&window.HookCard.loaded) return;               /* مركّب مرتين (compose.html + المحرّك)؟ مرة وحدة تكفي */
   const CV=document.getElementById('cv'), CX=CV.getContext('2d'), W=1080, H=1920;
-  let CFG=null, FONTF='Cairo', ACCC='#FFFFFF', BGC='#FFFFFF', INKC='#111111';
+  let CFG=null, FB='', FONTF='Cairo', ACCC='#FFFFFF', BGC='#FFFFFF', INKC='#111111';
   const cl=(v,a,b)=>Math.max(a,Math.min(b,v)), pr=(t,a,b)=>cl((t-a)/(b-a),0,1), eo=k=>1-Math.pow(1-k,3);
   const hx=h=>{h=String(h).replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16));};
   const rgba=(h,a)=>{const c=hx(h);return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')';};
@@ -37,7 +37,7 @@
     if(typeof hook==='string') hook={text:hook};
     if(!hook.text||!String(hook.text).trim()) return;
     const TH=theme||{};
-    FONTF=TH.font||eng('font')||'Cairo'; ACCC=TH.acc||eng('acc')||'#FFFFFF'; BGC=TH.bg||eng('bg')||'#FFFFFF'; INKC=TH.ink||eng('ink')||'#111111';
+    FONTF=eng('font')||TH.font||'Cairo'; FB=', '+((typeof LATIN_FONT!=='undefined'&&LATIN_FONT)||'Inter');   /* engine alias first (local fonts); Latin/digits fallback */ ACCC=TH.acc||eng('acc')||'#FFFFFF'; BGC=TH.bg||eng('bg')||'#FFFFFF'; INKC=TH.ink||eng('ink')||'#111111';
     if(!TH.acc) console.error('⚠️ الهوك: theme.json ما فيه acc — لون التمييز من المحرّك/محايد. شغّل 00_onboard عشان ألوان هويتك');
     const text=toWestern(hook.text).trim(), n=nWords(text);
     CFG={text, n, from:+hook.from||0, dur:+hook.dur||cl(0.9+0.28*n,1.6,3.0), pos:hook.pos||'auto', style:hook.style||'bold',
@@ -88,7 +88,7 @@
   function layout(){
     /* يُقاس كل فريم (كم كلمة بس) — كاش القياس كان يعلق بعرض خط ما اكتمل تحميله فتلتصق الكلمات */
     const groups=tokens(), MAXW=CFG.style==='card'?680:780, GAP=0.34;   /* card: الكرت = النص+120 ← يبقى داخل x 140..940 (عمود الأزرار يمين 950+) */
-    const wrap=fs=>{ CX.font='900 '+fs+'px '+FONTF; const gap=fs*GAP, lines=[];
+    const wrap=fs=>{ CX.font='900 '+fs+'px '+FONTF+FB; const gap=fs*GAP, lines=[];
       for(const g of groups){ const m=g.map(w=>({...w,w:CX.measureText(w.t).width})); lines.push(...split(m,fs,MAXW,gap)); }
       return lines; };
     /* الأفضل: كل جزء (قبل «…» وبعدها) بسطر واحد — نصغّر الخط لين 68 عشانه، وبعدها بس نكسر (بتوازن، 3 أسطر بالكثير) */
@@ -145,7 +145,7 @@
     }
     const txtC=(card||paper)?INKC:'#FFFFFF', glow=!card&&!paper;
     if(CFG.kicker){ CX.globalAlpha=alphaAll; const kf=Math.round(fs*0.42);
-      CX.font='800 '+kf+'px '+FONTF; const kw=CX.measureText(CFG.kicker).width, ky=top+kh*0.35+lift;
+      CX.font='800 '+kf+'px '+FONTF+FB; const kw=CX.measureText(CFG.kicker).width, ky=top+kh*0.35+lift;
       CX.fillStyle=ACCC; CX.beginPath(); CX.arc(540+kw/2+kf*0.55,ky,kf*0.22,0,7); CX.fill();
       CX.fillStyle=glow?'rgba(255,255,255,0.85)':rgba(INKC,0.7); CX.textAlign='center'; CX.fillText(CFG.kicker,540,ky+2); CX.textAlign='right'; }
     /* الكلمات: كلها ظاهرة من أول فريم (تنقرا فوراً + تصلح غلاف) — وكل كلمة «تستقر» بتتابع سريع، والتمييز يمسح من اليمين */
@@ -161,7 +161,7 @@
       for(const p of pos){ const w=p.w, d=p.i*0.045, k=eo(pr(lt,d,d+0.26)), ko=eo(pr(rt,0.24-(total-p.i)*0.012,0));
         const sc=1.04-0.04*k, dy=10*(1-k)-18*ko, cxw=p.xr-w.w/2;
         CX.save(); CX.globalAlpha=alphaAll; CX.translate(cxw,y+dy); CX.scale(sc,sc); CX.translate(-cxw,-(y+dy));
-        CX.font='900 '+fs+'px '+FONTF;
+        CX.font='900 '+fs+'px '+FONTF+FB;
         const run=w.em&&runs.find(r=>p.i>=r.first&&p.i<=r.last), lit=run&&run.ks>0.55;
         CX.fillStyle=lit?onAcc():txtC;
         if(glow&&!lit){ CX.shadowColor='rgba(0,0,0,0.65)'; CX.shadowBlur=24; CX.shadowOffsetY=5; }

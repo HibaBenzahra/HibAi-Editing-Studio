@@ -33,10 +33,12 @@ const FPS=30, OUT_D=Number(CFG.outro??0)||0, DUR=Number(caps.total)+OUT_D;   /* 
 /* المناطق الخطرة — نسبة الحبر المسموحة داخل كل وحدة */
 const DEF={
   zones:[
-    {k:'أعلى الشاشة (اسم الحساب وزر المتابعة)', x:0,   y:0,    w:1080, h:150, hard:true,  max:0.004},
-    {k:'أسفل الشاشة (كابشن انستقرام والصوت)',   x:0,   y:1620, w:1080, h:300, hard:true,  max:0.002},
-    {k:'حزام الأسفل الحذر',                     x:0,   y:1500, w:1080, h:120, hard:false, max:0.010},
-    {k:'يمين الشاشة (لايك · تعليق · مشاركة)',   x:950, y:1100, w:130,  h:650, hard:true,  max:0.010}   /* 1٪: أقل من كذا = حافة كرت لا نص */
+    /* HibAI safe zone (short videos): 140 top · 420 bottom · 70 each side · like/comment/share column */
+    {k:'Top 140 px (account name, follow button)',   x:0,    y:0,    w:1080, h:140, hard:true,  max:0.004},
+    {k:'Bottom 420 px (caption, audio, comments)',   x:0,    y:1500, w:1080, h:420, hard:true,  max:0.003},
+    {k:'Left edge 70 px (text never here — transitions may cross it)',  x:0,    y:140,  w:70,   h:1360,hard:false, max:0.006, flat:true},
+    {k:'Right edge 70 px (text never here — transitions may cross it)', x:1010, y:140,  w:70,   h:1360,hard:false, max:0.006, flat:true},
+    {k:'Right buttons column (like · comment · share)', x:950, y:1050, w:130,  h:450, hard:true,  max:0.010}   /* 1%: below that = a card edge, not text */
   ],
   hook_max:0.5            // أول كابشن لازم يظهر بأول نصف ثانية
 };
@@ -173,6 +175,11 @@ const FLAT_B='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2
         let ink=0;
         const x1=Math.max(EDGE,z.x), x2=Math.min(W-EDGE,z.x+z.w);
         const y1=Math.max(EDGE,z.y), y2=Math.min(H-EDGE,z.y+z.h);
+        /* side strips: a full-screen panel/background passes through them — only count pixels that stand out
+           from the strip's own background (text, icons), not the flat or softly shaded backdrop */
+        let F=null;
+        if(z.flat){ const acc=[0,0,0]; let n=0; for(let y=y1;y<y2;y+=8){ const row=y*W*4; for(let x=x1;x<x2;x+=4){ const i=row+x*4; acc[0]+=A[i];acc[1]+=A[i+1];acc[2]+=A[i+2];n++; } }
+          F=acc.map(v=>v/Math.max(1,n)); }
         for(let y=y1;y<y2;y++){
           const row=y*W*4;
           for(let x=x1;x<x2;x++){
@@ -184,6 +191,7 @@ const FLAT_B='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2
             // خلفية أو ظلّ خفيف فوقها (ظلال الكروت مو نصاً — لا تُحسب)
             if(Math.abs(r-B[0])<=50&&Math.abs(g-B[1])<=50&&Math.abs(b-B[2])<=50) continue;
             if(r<18&&g<18&&b<18) continue;                                                   // ظل أسود
+            if(F&&Math.abs(r-F[0])<=60&&Math.abs(g-F[1])<=60&&Math.abs(b-F[2])<=60) continue;   // the strip's own backdrop
             ink++;
           }
         }

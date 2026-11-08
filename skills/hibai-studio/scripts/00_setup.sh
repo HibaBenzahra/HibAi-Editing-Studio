@@ -96,6 +96,9 @@ have ffmpeg  && OK+=("ffmpeg")  || MISS+=("ffmpeg")
 have ffprobe && OK+=("ffprobe") || MISS+=("ffprobe")
 "$PY" -c "import whisper" 2>/dev/null && OK+=("whisper") || MISS+=("whisper")
 "$PY" -c "import numpy"   2>/dev/null && OK+=("numpy")   || MISS+=("numpy")
+# HibAI: captions under the jaw (face finder) + downloading reference reels / clips
+"$PY" -c "import cv2; cv2.FaceDetectorYN" 2>/dev/null && OK+=("opencv") || MISS+=("opencv")
+"$PY" -m yt_dlp --version >/dev/null 2>&1 && OK+=("yt-dlp") || MISS+=("yt-dlp")
 
 # كروم: نفس ترتيب البحث اللي بالسكربتات
 find_chrome(){
@@ -121,6 +124,7 @@ line "النظام: $OS · بايثون: $PY"
 line "الجاهز: ${OK[*]:-لا شيء}"
 line "الإضافات (اختيارية — 00_setup.sh --extras): $(extras_status)"
 if have npm; then line "المحرّك الثاني (ريموشن): متاح عند الطلب — 04b_remotion.sh setup ينزّله (~500 ميقا)"
+  line "HyperFrames (HTML → MP4، اختياري): npx --yes hyperframes@latest — كيتنزّل وقت الحاجة"
 else line "المحرّك الثاني (ريموشن): يحتاج npm — غير متاح، والخفيف يكفي"; fi
 [ "$OS" = mac ] || NOTE+=("مؤثّر «الكلام ورا الشخص» (11_behind_text.js) يشتغل على ماك فقط — بقية السكل يشتغل عادي")
 
@@ -145,6 +149,8 @@ for m in "${MISS[@]}"; do
     whisper) line "⏬ openai-whisper… (الموديل ينزل أول تشغيل، 1.4 قيقا)"
       pipi openai-whisper || NOTE+=("whisper فشل") ;;
     numpy)   pipi numpy || NOTE+=("numpy فشل") ;;
+    opencv)  line "⏬ opencv (face finder for captions under the jaw)…"; pipi opencv-python-headless || NOTE+=("opencv فشل") ;;
+    yt-dlp)  line "⏬ yt-dlp (download reference reels/clips)…"; pipi yt-dlp || NOTE+=("yt-dlp فشل") ;;
     puppeteer-core) line "⏬ puppeteer-core…"
       ( cd "$SKILL" && npm i --silent puppeteer-core ) || NOTE+=("puppeteer-core فشل") ;;
     chrome) NOTE+=("كروم مو منصّب — نزّله من google.com/chrome أو حدّد CHROME_PATH") ;;

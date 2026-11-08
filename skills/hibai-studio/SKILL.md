@@ -20,6 +20,80 @@ description: 'HibAI Studio by Hiba (@hibssssi) — edits a talking-to-camera vid
 - اسم السكل للمستخدم: **HibAI Studio**. ما تذكرش أي اسم ثاني.
 
 
+## 🎬 HibAI editing standard (Hiba's rules — they win over any older line below)
+
+### A) The flow: 3 approvals, then the video
+Never jump to the final render. Every edit goes through these gates, in this order:
+
+1. **Before editing — 2 questions** (skip a question only if the dashboard already answered it, `profile.json` ← `hibai.audio` / `hibai.light`):
+   - **Audio:** «Clean the sound (remove noise/echo, even it out) or keep it as it is?» → clean = `references/audio-enhance.md`
+     (`bash scripts/02b_enhance_audio.sh <work> --local`), keep = don't touch.
+   - **Lighting:** «Keep the lighting as it is, or improve it?» Run `python scripts/25_scopes.py <work>` first and show one
+     before/after frame → improve = `theme.json` ← `"grade":"auto"`, keep = `"grade": false`.
+2. **Gate 1 — the script.** Transcribe, fix the Darija, then print the **whole** numbered script in the chat
+   (`10_script_edit.py show`). The user confirms, fixes words, or drops lines. No scene design before this «OK».
+3. **Gate 2 — the storyboard.** Plan every scene, render **one frame from the middle of each scene**
+   (`python scripts/32_midframes.py <work>` + `07_contact_sheet.sh`) and send it with a numbered table:
+   `# · time · what's said · layout (full / split / card / no-face) · visual (motion, logo, UI, screenshot) · transition in · sound`.
+   - Short/simple video → at least **6** frames. More scenes → **one frame per scene, 12 or more** — never hide scenes.
+   - The user approves or asks for changes → fix → show again. Only after «OK» render the full video.
+4. **Final video** + `.srt` / `.txt`, and the safe-zone check must pass.
+
+### B) Captions
+- **Under the jaw:** after the frames exist (`vfr/`), run `python scripts/38_jaw.py <work>` — the caption then sits just under
+  the speaker's chin in full-screen shots (never on the face, never below y 1480).
+- **Words per screen:** `theme.json` ← `capWords` = 2 (1–2 words) or 4 (3–4 words) — from the dashboard. Size: `capScale` 0.8
+  (don't make it big; 0.7 for busy shots).
+- **Latin words in a Latin font, Darija/Arabic in the Arabic font** — automatic (`latinFont`, default Inter). Fonts are local:
+  `python scripts/39_fonts.py <work>` (the theme step runs it); `39_fonts.py list` shows them. An uploaded .ttf/.otf works too.
+
+### C) Don't repeat — show
+If a word is in the caption at that moment, the motion must **not** write the same word again: show it — an icon, a logo,
+an interface, a number counter, a photo, a screenshot. If the motion really has to write the sentence, hide the caption for that
+scene (`nocap`). Rule of thumb: caption = what's said, motion = what it looks like.
+
+### D) Don't be lazy (unless the user asked for slow & simple)
+- Something pro happens **every 3–4 seconds**: a motion from the bank (`references/moves.md`, 100+), the motion kit
+  (`references/motion-kit.md`), a style (`references/styles.md`), a real asset, or a camera move on the speaker.
+- **No text-only scene.** Every scene has a visual.
+- **2–3 depth moments** per reel (`references/moves.md` §3و).
+- **Pro transitions** between ideas (whip · zoomWipe · crossZoom · glitch · iris · slideOver · lumaMelt…) — not only hard cuts.
+- **Camera on the speaker:** punch-in on key words (`FX.snapZoom`), slow push-ins (`FX.pushIn`), pull-outs back — the speaker's
+  frame should move at least every ~4 s, and every zoom-in comes back out.
+- When a brand/app/tool is named → its **real logo** and, when it helps, its **real interface** (see E).
+- Check before rendering: count the scenes without a visual and the seconds without movement — fix them first.
+
+### E) Real assets — where to get them (in this order)
+1. **The user's folder:** scan the video's folder (and any `assets/` inside it) for images, logos, screenshots, screen
+   recordings, music, fonts. Use them first. Ask «I found X — should I use it?» only if unsure what it is.
+2. **This skill:** the motion bank, motion kit, 17 styles, `references/`, `motion/` (devices, phone mockup, UI pieces).
+3. **The internet** — `python scripts/42_web_assets.py <work> …`:
+   - `logo <brand>` — official logo (Simple Icons, 3,000+ brands) · `icon <set:name>` — UI icons (lucide, tabler, ph, solar…)
+   - `shot <url> [--mobile]` — screenshot of a public page · `find <word>` — suggestions
+   - photos: `python scripts/13_assets.py <work>/assets <name> "<english query>"` (Wikimedia, free licences)
+   - a reference reel/clip from a link: `python -m yt_dlp -o "<work>/ref.%(ext)s" <url>` (only for reference/study, or the user's own content)
+4. **Build it yourself:** rebuild an app/site interface in code as close to the real one as possible (real logo, real colours,
+   real layout — chat bubbles, buttons, menus), using the phone/laptop mockups and glass cards.
+5. Still missing → ask the user for a screenshot or screen recording (things behind a login).
+- Brand colours: logos keep their real colour; everything else (cards, icons, backgrounds) follows `theme.json`.
+
+### F) Screenshots & screen recordings
+Never just paste them: **zoom in** on the part that matters, **highlight** it (rectangle, circle or underline in the accent colour,
+drawn on), hold, then **zoom back out**. Original aspect ratio always (no squashing). Details: `references/screen-recording.md`.
+
+### G) Branding
+The user's branding (colours, fonts, logo, background) runs through **everything**: motions, cards, icons, backgrounds, end card.
+No hard-coded colours. HibAI's lime/purple only on HibAI's own videos.
+
+### H) Safe zone (short videos)
+Nothing important in the **top 140 px**, the **bottom 420 px** (below y 1500), **70 px on each side**, or the like/comment/share
+column. `node scripts/08_safe_check.js <work> --shot` blocks delivery if text breaks it.
+
+### I) Tools
+`bash scripts/00_setup.sh` checks and installs: ffmpeg, whisper, OpenCV (jaw), yt-dlp, Chrome + puppeteer. On demand:
+Remotion (`04b_remotion.sh setup`) and HyperFrames (`npx --yes hyperframes@latest`). Windows and macOS both work — use `python`
+on Windows, `python3` on macOS/Linux.
+
 ## ريل من فيديو كلام — بلا برنامج مونتاج
 
 المونتاج كله كود:
@@ -231,7 +305,7 @@ python3 scripts/10_script_edit.py <work> undo
 
 ```bash
 python3 scripts/03_cut_zoom.py <work>
-mkdir -p <work>/vfr && ffmpeg -v error -i <work>/cutz.mp4 -vf fps=30 -q:v 3 -y <work>/vfr/%05d.jpg
+mkdir -p <work>/vfr && ffmpeg -v error -i <work>/cutz.mp4 -vf "fps=30,scale=in_color_matrix=bt709:out_color_matrix=bt601:out_range=pc" -q:v 1 -qmin 1 -y <work>/vfr/%05d.jpg
 ```
 
 - **الزوم مقفول لكل مقطع (6.0):** أول تشغيل يكتب `cut.json` ← `"zooms": {"25.05": 1.06, …}` (المفتاح بداية المقطع بثواني الأصل).
@@ -283,8 +357,8 @@ python3 scripts/23_headcrop.py <work> --from <بداية أول كرت>
 
 | المنطقة | لا تحط فيها نص |
 |---|---|
-| أعلى | y 0-150 |
-| أسفل | y 1620-1920 (وحزام حذر 1500-1620) |
+| أعلى | y 0-140 |
+| أسفل | y 1500-1920 (420 px) · وجانبين 70 px |
 | يمين | x 950-1080 بين y 1100 و1750 (لايك، تعليق، مشاركة) |
 
 المحرّك مضبوط أصلاً: أسفل الكابشن 1460، وشريط التقدّم 1492 بملء الشاشة.
