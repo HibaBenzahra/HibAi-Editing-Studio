@@ -282,6 +282,10 @@ function jawAt(t){ if(!CAP_JAW) return null; let lo=0,hi=CAP_JAW.length-1; if(t<
 const CAP_MAX_BOTTOM=1480;   /* safe zone: nothing below 1500 */
 /* the caption top for a full-screen shot: under the jaw, but the whole caption stays above the safe line */
 function capTop(t,h,def){ const j=jawAt(t); if(j==null) return def; return Math.min(j+26, CAP_MAX_BOTTOM-h); }
+/* consecutive Latin words ("Claude Code") read left-to-right inside a right-to-left line: keep them as one block */
+function _mergeLatin(ws){ const out=[]; for(const w of ws){ const p=out[out.length-1];
+    if(p&&_isLatin(p.t)&&_isLatin(w.t)&&!/[.,!?؟]$/.test(p.t)) out[out.length-1]={...p,t:p.t+' '+w.t,e:w.e,hot:p.hot||w.hot};
+    else out.push({...w}); } return out; }
 /* words per screen: the chunk of N words that holds the spoken word */
 function _chunk(c,t){ if(!CAP_WORDS||c.w.length<=CAP_WORDS) return c; const ch=[];
   for(let i=0;i<c.w.length;){ let n=CAP_WORDS; if(/^[0-9٠-٩%]+$/.test(c.w[Math.min(i+n-1,c.w.length-1)].t)&&i+n<c.w.length) n++;  /* number + unit stay together */
@@ -319,7 +323,7 @@ function caption(t){
   if(collageActive(t)) return;   /* الكولاج يرسم كلماته قصاصات */
   let c=CAPS.find(c=>t>=c.s&&t<c.e); if(!c)return;
   c=_capRest(c,t); if(!c) return;   /* 6.0: الكلمات اللي طلعت ورا الشخص/«طبقات» ما تنعاد بالكابشن */
-  c=_chunk(c,t);   /* HibAI: 1–2 or 3–4 words at a time */
+  c={...c,w:_mergeLatin(c.w)}; c=_chunk(c,t);   /* HibAI: Latin runs stay in order · 1–2 or 3–4 words at a time */
   FS=Math.round(55*Math.max(0.75,CAP_SCALE/0.8)); LH=Math.round(FS*1.44);
   const lt=t-c.s,rt=c.e-t;let a=1,dy=0,sc=1;   /* capStill: الدخول والطلعة بالشفافية بس — بلا صعود ولا تكبير */
   if(lt<0.2){const k=lt/0.2;a=ease(k);if(!CAP_STILL){dy=(1-ease(k))*28;sc=0.93+0.07*back(k);}}
