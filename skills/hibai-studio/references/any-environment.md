@@ -20,7 +20,7 @@
 | الخطوة | الأفضل (ماك محلي) | بيئة بلا ماك / سحابة |
 |---|---|---|
 | تفريغ الكلام | `mlx-whisper` (الأسرع) ← `whisper` | `faster-whisper` (`pip install faster-whisper`، الموديل من huggingface `Systran/faster-whisper-*`). ✅ اشتغل بجلسة الجوال. |
-| قص الشخص عن الخلفية | Vision (`personmask.swift`) | **MODNet** ✅ اشتغل بجلسة الجوال · ثم `rembg` (`pip install rembg`، موديل `u2net_human_seg`) · ثم BiRefNet. ⚠️ الشعر والأيدي أصعب — لا تقص الجزء اللي أصلاً مغطى. |
+| قص الشخص عن الخلفية | Vision (`personmask.swift`) · ويندوز/لينكس: `personmask.py` (rembg) — `11_behind_text.js` يختار لحاله | **MODNet** ✅ اشتغل بجلسة الجوال · ثم `rembg` (`pip install rembg`، موديل `u2net_human_seg`) · ثم BiRefNet. ⚠️ الشعر والأيدي أصعب — لا تقص الجزء اللي أصلاً مغطى. |
 | تتبع الوجه (قص عمودي، قص الكرت) | Vision (`facetrack.swift`) | MediaPipe أو OpenCV Haar · لو ولا واحد: قص من النص مع تنبيه. (ما انجرّب) |
 | تتبع الكف | Vision (`handpose.swift`) | MediaPipe Hands. (ما انجرّب) |
 | فيديو آيفون HDR | `hdr2sdr.swift` | `ffmpeg` بفلتر `zscale` + `tonemap=hable` (يحتاج بناء ffmpeg فيه zscale). (ما انجرّب) |

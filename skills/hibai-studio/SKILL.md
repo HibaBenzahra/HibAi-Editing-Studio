@@ -87,14 +87,33 @@ Use these before writing a scene by hand (all in the theme colours, safe-zone si
 - `HK.flow(t,{from,to,items})` — files/icons flying between two tiles · `HK.orbit(t,{center,items})` — icons orbiting a logo
 - `HK.desktopApp(t,{brand,name,tabs,clickTab,clickAt,before,after,progress})` — an app window rebuilt in code, the pointer
   clicks a tab, a progress bar fills · `HK.pointer`, `HK.tint` (recolour an icon), `HK.img`, `HK.appear`
+- `HK.spot(t,{s,e,img|rec,frame:'browser'|'phone'|'card',url,focus:{x,y,w,h,at,out},label,style})` — **the spotlight** for any
+  screenshot or screen recording: zoom in on the focus, dim the rest, draw the highlight + a label pill, zoom back out (rule F).
+- `HK.zone(t)` → `{x,y,w,h}` where visuals fit right now (follows the layout) · `HK.fit(HK.zone(t), 920, 900, R=>HK.desktopApp(t,{R,…}))`
+  scales a big design into it. **Place every visual with these** — then the same scene script works for every layout.
 - Start the scene script with `HK.load([...files in assets/])`. Example: a full real-asset reel in ~15 lines → see the header of
   `scripts/hibai-kit.js`.
 - ⚠️ Scene scripts share one page with the engine: never declare top-level names the engine already uses (`draw`, `eio`, `X`…) —
   wrap helpers inside `MV.ready(()=>{…})`. A broken script now prints `❌ SCRIPT ERROR` in the render log — never ignore it.
 
+### E3) Layout & background — from the dashboard, automatic
+- **Layout** (`theme.json` ← `layout`, `pip`): after captions + `38_jaw.py`, run `python scripts/44_layout.py <work>` — it prints the
+  plan (hook and CTA always you full screen); show it in the storyboard, then `--write` saves it to `studio.json` ← `scenes`.
+  split = visuals top / you below · alternate = you ↔ visuals · splitmix = split + some visuals-only beats · visuals = your voice over
+  visuals · pip = visuals + you in a circle/square/rect (`R_PIP`, bottom-left, zoomed on your face via `faceBox`) · cutout = you
+  without background in front of the visuals · full = you full screen.
+- **Cut-out** moments: `node scripts/11_behind_text.js <work> cutout <a>-<b>` (44_layout prints the exact commands). Mac → Apple
+  Vision · Windows/Linux → rembg (`personmask.py`, ~3 frames/s, model downloads once). The caption goes above the head.
+- **Background** (`bgStyle`, `bgBrand`, `bgColor`, `bgImage`): drawn by `motion/backgrounds.js` wherever the video is not full
+  screen (split, PiP, visuals only, cut-out, end card), in the user's brand colours. `blur` = the speaker's own video, blurred.
+  Captions turn dark by themselves on a light background (white, white grid, light colour/image).
+- Check the storyboard: one frame per layout moment (`04 preview` + `43_storyboard.py`), and `08_safe_check.js` (it ignores the background).
+
 ### F) Screenshots & screen recordings
 Never just paste them: **zoom in** on the part that matters, **highlight** it (rectangle, circle or underline in the accent colour,
 drawn on), hold, then **zoom back out**. Original aspect ratio always (no squashing). Details: `references/screen-recording.md`.
+Use `HK.spot` (E2). A screen recording: `python scripts/42_web_assets.py <work> rec <video> --name x [--from s --to s]` → then
+`HK.rec('x', n)` at the top of the scene script and `HK.spot(t,{rec:{name:'x',n},focus:{…},label:'…'})`.
 
 ### G) Branding
 The user's branding (colours, fonts, logo, background) runs through **everything**: motions, cards, icons, backgrounds, end card.
@@ -105,7 +124,7 @@ Nothing important in the **top 140 px**, the **bottom 420 px** (below y 1500), *
 column. `node scripts/08_safe_check.js <work> --shot` blocks delivery if text breaks it.
 
 ### I) Tools
-`bash scripts/00_setup.sh` checks and installs: ffmpeg, whisper, OpenCV (jaw), yt-dlp, Chrome + puppeteer. On demand:
+`bash scripts/00_setup.sh` checks and installs: ffmpeg, whisper, OpenCV (jaw), yt-dlp, rembg (cut-out, Windows/Linux), Chrome + puppeteer. On demand:
 Remotion (`04b_remotion.sh setup`) and HyperFrames (`npx --yes hyperframes@latest`). Windows and macOS both work — use `python`
 on Windows, `python3` on macOS/Linux.
 
@@ -184,6 +203,13 @@ on Windows, `python3` on macOS/Linux.
 | `keywords` | زيدهم لـ`hot` بـ`fixes.json` (بالكتابة اللي قالها) |
 | `autoRetakes: true` | الخطوة 5.5: احذف الجمل المعاودة والغلطات بنفسك، وبعدها ورّيه شنو حذفتي بسطر — بلا ما تسوّله قبل |
 | `enSubs: true` | بالتسليم: ترجم `ad-master.srt` للإنجليزية بنفس التوقيتات ← `ad-master.en.srt` |
+| `audio` = clean/keep/ask | clean ← نظّف الصوت (`02b_enhance_audio.sh`) بلا ما تسوّل · ask ← سوّله بالخطوة A |
+| `light` = improve/keep/ask | improve ← `grade:"auto"` (مكتوب لحاله) · ask ← ورّيه `25_scopes.py` وسوّله |
+| `layout`, `pip` | مكتوبين بـtheme ← `44_layout.py` (E3) يبني المشاهد · `auto` ← اختار أنت حسب المحتوى |
+| `bg` | مكتوب بـtheme (`bgStyle`…) ← الخلفية كتبان لحالها ورا السبليت/PiP/الرسوم (E3) |
+| `capWords`, `capFx`, `latinFont` | مكتوبين بـtheme (B) — `capFx` font ← `hotFont` |
+| `effects` (16 HibAI Motions) | الحركات اللي عجباتو — استعملهم فاللحظات القوية (Phase 4) |
+| `moves` ← on/off | `on` = فضّلهم · `off` = ما تستعملهمش أبداً |
 
 ---
 

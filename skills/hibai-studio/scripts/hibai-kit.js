@@ -11,6 +11,10 @@
    HK.orbit(t, {s, e, cx, cy, center, items})               a logo in the middle, icons orbiting (depth moment)
    HK.desktopApp(t, {s, e, R, brand, name, tabs, active, clickAt, title, progress})   a desktop app window rebuilt in code
    HK.pointer(x, y, click)                                  mouse pointer, click 0..1 = press + ripple
+   HK.spot(t, {s, e, img | rec, frame, url, focus:{x,y,w,h,at,out}, label})   spotlight for screenshots + screen recordings
+   HK.zone(t) → {x,y,w,h}                                   where visuals fit right now (follows the layout)
+   HK.fit(zone, w, h, R => …)                                draw a w×h design scaled into the zone
+   HK.rec(name, n)                                          preload a screen recording (frames from 42_web_assets.py rec)
    HK.tint(file, x, y, size, colour) · HK.img(file, x, y, w, h)
    Layouts: R_DOWN → keep visuals in y 160–600 · R_LOWER → y 160–1180 · x always 70–1010 (safe zone). */
 (function () {
@@ -27,7 +31,9 @@
   const NS = () => { X.shadowColor = 'transparent'; X.shadowBlur = 0; X.shadowOffsetY = 0; };
   const HK = {};
   HK.ease = { out: E, inOut: EIO };
-  HK.load = list => list.forEach(f => { if (IMGS[f]) return; const i = new Image(); i.src = 'assets/' + f; IMGS[f] = i; });
+  G.READY = G.READY || [];   /* compose init() waits for these — images are ready before the first frame */
+  HK.load = list => list.forEach(f => { if (IMGS[f]) return; const i = new Image(); i.src = 'assets/' + f; IMGS[f] = i;
+    G.READY.push(new Promise(r => { i.onload = r; i.onerror = r; })); });
   const ok = f => { const i = IMGS[f] || (HK.load([f]), IMGS[f]); return i && i.complete && i.naturalWidth ? i : null; };
   HK.img = (f, x, y, w, h) => { const i = ok(f); if (i) X.drawImage(i, x, y, w, h); };
   const TC = document.createElement('canvas');
@@ -120,5 +126,66 @@
     if (o.clickAt != null && t < o.clickAt + .45) { const j = Math.max(0, tabs.indexOf(o.clickTab)), pk = EIO(P(t, o.clickAt - .65, o.clickAt));
       HK.pointer(L(R.x + 700, R.x + 110, pk), L(R.y + 700, R.y + 150 + j * 78, pk), P(t, o.clickAt, o.clickAt + .2)); }
     X.restore(); };
+
+  /* ── Spotlight (HibAI rule F) for any screenshot or screen recording: zoom in on the part that matters, dim the rest,
+     draw the highlight (+ optional label), zoom back out.
+     HK.spot(t, {s, e, img | rec, R, frame:'browser'|'phone'|'card', url, focus:{x, y, w, h, at, out}, scale, dim, style, label})
+       img   : screenshot file in assets/          rec : {name, n, fps} → frames assets/rec/<name>/0001.jpg … (42_web_assets.py rec)
+       focus : the area in image pixels · at = zoom-in time · out = zoom-out time (default e − 0.7)
+       scale : zoom amount (default: the focus fills ~80% of the width, max 3) · dim: 0..1 outside the focus (default .55)
+       style : 'rect' (default) | 'circle' | 'underline' · label: short text on a pill next to the highlight */
+  HK.rec = (name, n) => { const l = []; for (let i = 1; i <= n; i++) l.push('rec/' + name + '/' + String(i).padStart(4, '0') + '.jpg'); HK.load(l); };
+  HK.spot = (t, o) => HK.appear(t, o.s, o.e, () => {
+    const fr = o.frame || 'browser', R = o.R || (fr === 'phone' ? { x: 300, y: 210, w: 480, h: 990 } : { x: 80, y: 250, w: 920, h: 900 });
+    let file = o.img;
+    if (o.rec) { const i = Math.min(o.rec.n, Math.max(1, Math.floor((t - o.s) * (o.rec.fps || 30)) + 1)); file = 'rec/' + o.rec.name + '/' + String(i).padStart(4, '0') + '.jpg'; }
+    const im = ok(file); let vx = R.x, vy = R.y, vw = R.w, vh = R.h, rad = [26, 26, 26, 26];
+    X.save(); X.direction = 'ltr';
+    if (fr === 'browser') { const H = 56; SH(50, 22, .35); X.fillStyle = '#FFFFFF'; RR(R.x, R.y, R.w, R.h, 26); X.fill(); NS();
+      X.fillStyle = '#EDEBE6'; RR(R.x, R.y, R.w, H, [26, 26, 0, 0]); X.fill();
+      ['#FF5F57', '#FEBC2E', '#28C840'].forEach((c, j) => { X.fillStyle = c; X.beginPath(); X.arc(R.x + 30 + j * 24, R.y + H / 2, 7, 0, 7); X.fill(); });
+      X.fillStyle = '#FFFFFF'; RR(R.x + 110, R.y + 12, R.w - 140, H - 24, 10); X.fill();
+      X.fillStyle = '#6B6B6B'; X.font = '500 22px ' + lat(); X.textAlign = 'left'; X.textBaseline = 'middle'; X.fillText(o.url || '', R.x + 130, R.y + H / 2 + 1);
+      vy += H; vh -= H; rad = [0, 0, 26, 26]; }
+    else if (fr === 'phone') { X.fillStyle = '#0B0B0F'; SH(50, 22, .45); RR(R.x - 16, R.y - 16, R.w + 32, R.h + 32, 64); X.fill(); NS(); rad = [48, 48, 48, 48]; }
+    else { X.fillStyle = '#FFFFFF'; SH(50, 22, .35); RR(R.x, R.y, R.w, R.h, 26); X.fill(); NS(); }
+    X.save(); RR(vx, vy, vw, vh, rad); X.clip();
+    if (im) { const f = o.focus, base = vw / im.naturalWidth, iw = im.naturalWidth, ih = im.naturalHeight;
+      const out = f ? (f.out != null ? f.out : o.e - .7) : 0;
+      const zk = f ? EIO(P(t, f.at, f.at + .8)) * (1 - EIO(P(t, out, out + .6))) : 0;
+      const target = f ? Math.min(o.scale || 3, Math.max(1, vw * .8 / (f.w * base))) : 1, sc = base * L(1, target, zk);
+      const cx0 = iw / 2, cy0 = Math.min(ih / 2, vh / 2 / base);
+      const cx = f ? L(cx0, f.x + f.w / 2, zk) : cx0, cy = f ? L(cy0, f.y + f.h / 2, zk) : cy0;
+      const ox = vx + vw / 2 - cx * sc, oy = vy + vh / 2 - cy * sc;
+      X.drawImage(im, ox, oy, iw * sc, ih * sc);
+      if (f) { const hk = EIO(P(t, f.at + .45, f.at + 1)) * (1 - EIO(P(t, out - .15, out + .25)));
+        if (hk > 0) { const bx = ox + f.x * sc - 12, by = oy + f.y * sc - 12, bw = f.w * sc + 24, bh = f.h * sc + 24;
+          X.fillStyle = 'rgba(0,0,0,' + ((o.dim == null ? .5 : o.dim) * hk) + ')'; X.beginPath(); X.rect(vx, vy, vw, vh);
+          if (o.style === 'circle') X.ellipse(bx + bw / 2, by + bh / 2, bw * .62, bh * .9, 0, 0, Math.PI * 2, true); else X.roundRect(bx, by, bw, bh, 16);
+          X.fill('evenodd');
+          X.strokeStyle = acc(); X.lineWidth = 7; X.lineCap = 'round'; X.shadowColor = acc(); X.shadowBlur = 22 * hk;
+          if (o.style === 'underline') { X.beginPath(); X.moveTo(bx, by + bh + 6); X.lineTo(bx + bw * hk, by + bh + 6); X.stroke(); }
+          else if (o.style === 'circle') { X.beginPath(); X.ellipse(bx + bw / 2, by + bh / 2, bw * .62, bh * .9, 0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * hk); X.stroke(); }
+          else { const per = 2 * (bw + bh); X.setLineDash([per * hk, per]); RR(bx, by, bw, bh, 16); X.stroke(); X.setLineDash([]); }
+          NS();
+          if (o.label) { const fnt = typeof FONT !== 'undefined' ? FONT : 'sans-serif', ar = /[؀-ۿ]/.test(o.label);
+            X.font = '800 36px ' + (ar ? fnt : lat()); const tw = X.measureText(o.label).width, pw = tw + 48, ph = 64;
+            const px = Math.min(vx + vw - pw - 16, Math.max(vx + 16, bx + bw / 2 - pw / 2)), py = by - ph - 18 > vy + 10 ? by - ph - 18 : by + bh + 18;
+            X.globalAlpha *= hk; X.fillStyle = acc(); SH(24, 8, .3); RR(px, py, pw, ph, ph / 2); X.fill(); NS();
+            X.fillStyle = typeof onACC === 'function' ? onACC() : '#FFFFFF'; X.textAlign = 'center'; X.textBaseline = 'middle'; X.direction = ar ? 'rtl' : 'ltr';
+            X.fillText(o.label, px + pw / 2, py + ph / 2 + 2); } } } }
+    X.restore(); X.restore(); }, 60);
+
+  /* Free area for visuals at time t, from the current layout (studio.json scenes · 44_layout.py) — place every visual inside it:
+     split → y 160–~600 · PiP → y 160–750 (circle/square) / 630 (rect) · visuals only → y 160–1260 · cut-out → y 160–860 · you full screen → top band y 160–600 */
+  HK.zone = t => { const R = typeof vtarget === 'function' ? vtarget(t) : null, Z = (y, h) => ({ x: 70, y, w: 940, h });
+    if (typeof cutoutActive === 'function' && cutoutActive(t)) return Z(160, 700);
+    if (!R || (R.w >= 1079 && R.h >= 1919)) return Z(160, 440);
+    if (R.pip) return Z(160, R.y - 380);   /* the caption sits just above the frame */
+    if (R.off) return Z(160, 1100);
+    return Z(160, Math.max(300, R.y - 360)); };
+  /* Fit a w×h design into a zone (scaled down when the zone is smaller): HK.fit(HK.zone(t), 920, 900, R => HK.desktopApp(t, {R, …})) */
+  HK.fit = (Z, w, h, fn) => { const s = Math.min(1, Z.w / w, Z.h / h); X.save(); X.translate(Z.x + (Z.w - w * s) / 2, Z.y + (Z.h - h * s) / 2); X.scale(s, s);
+    fn({ x: 0, y: 0, w, h }); X.restore(); };
   G.HK = HK;
 })();

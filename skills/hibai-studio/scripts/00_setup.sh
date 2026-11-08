@@ -99,6 +99,8 @@ have ffprobe && OK+=("ffprobe") || MISS+=("ffprobe")
 # HibAI: captions under the jaw (face finder) + downloading reference reels / clips
 "$PY" -c "import cv2; cv2.FaceDetectorYN" 2>/dev/null && OK+=("opencv") || MISS+=("opencv")
 "$PY" -m yt_dlp --version >/dev/null 2>&1 && OK+=("yt-dlp") || MISS+=("yt-dlp")
+# HibAI: the cut-out layout (you without background, in front of the visuals) — Mac uses Apple Vision, others use rembg
+if [ "$OS" != mac ]; then "$PY" -c "import rembg, PIL" 2>/dev/null && OK+=("rembg") || MISS+=("rembg"); fi
 
 # كروم: نفس ترتيب البحث اللي بالسكربتات
 find_chrome(){
@@ -151,6 +153,7 @@ for m in "${MISS[@]}"; do
     numpy)   pipi numpy || NOTE+=("numpy فشل") ;;
     opencv)  line "⏬ opencv (face finder for captions under the jaw)…"; pipi opencv-python-headless || NOTE+=("opencv فشل") ;;
     yt-dlp)  line "⏬ yt-dlp (download reference reels/clips)…"; pipi yt-dlp || NOTE+=("yt-dlp فشل") ;;
+    rembg)   line "⏬ rembg (the cut-out layout — its model downloads on first use, ~170 MB)…"; pipi "rembg[cpu]" pillow || NOTE+=("rembg فشل — the cut-out layout won't work, everything else will") ;;
     puppeteer-core) line "⏬ puppeteer-core…"
       ( cd "$SKILL" && npm i --silent puppeteer-core ) || NOTE+=("puppeteer-core فشل") ;;
     chrome) NOTE+=("كروم مو منصّب — نزّله من google.com/chrome أو حدّد CHROME_PATH") ;;

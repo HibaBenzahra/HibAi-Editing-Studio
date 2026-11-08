@@ -20,7 +20,8 @@
 | `08_safe_check.js` | المنطقة الآمنة + الهوك (نفس حمولة 04: theme + studio + behind) | الخفيف |
 | `09_srt.py` | ملف ترجمة + نص الكابشن | مشترك |
 | `10_script_edit.py` | `show` (يطبع النص والجمل المعادة) · `drop` · `keep` · `undo` | مشترك |
-| `11_behind_text.js` + `personmask.swift` | أنماط القصّ الثلاثة (`references/cut-styles.md`) | الخفيف (ماك) |
+| `11_behind_text.js` + `personmask.swift` / `personmask.py` | أنماط القصّ الثلاثة (`references/cut-styles.md`) | ماك (Vision) · ويندوز/لينكس (rembg) |
+| `44_layout.py` | خطة التخطيط من الداشبورد (سبليت · PiP · قصّ · رسوم بوحدها…) ← `studio.json` scenes | الخفيف |
 | `13_collage.js` · `13_collage_sfx.py` · `collage.TEMPLATE.html` | أسلوب الكولاج (`references/collage.md`) | مستقل |
 | `13_assets.py` | صورة من ويكيميديا (رخصة حرة) مع قصّ خلفية اختياري | مشترك |
 | `14_backdrop.py` | خلفية باهتة (`references/backdrop.md`) | الخفيف |

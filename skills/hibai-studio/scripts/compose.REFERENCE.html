@@ -21,6 +21,9 @@ let CAPS=[],VEND=0,OUTRO=0,DUR=0;
 /* HibAI: captions under the jaw · words per screen · size · Latin words in a Latin font */
 let CAP_JAW=null, CAP_WORDS=0, CAP_SCALE=0.8, LATIN_FONT='Inter', HOT_FONT=null;
 let THEME_RAW=null;
+/* HibAI backgrounds (motion/backgrounds.js): theme.json ← bgStyle · bgBrand · bgColor · bgImage — shown wherever the video is not full screen */
+let BG_STYLE=null, BG_BRAND=true, BG_COLOR=null; const BGI=new Image();
+let PIP_SHAPE='circle', FACE_BOX=null;   /* theme.json ← pip: circle|square|rect · studio.json ← faceBox (38_jaw.py) */
 function init(d){
   CAPS=d.cards;VEND=d.total;OUTRO=d.outro;DUR=VEND+OUTRO;
   BEHIND=d.behind||null;
@@ -29,6 +32,9 @@ function init(d){
   BG=t.bg||BG; INK=t.ink||INK; ACC=t.acc||ACC; CLAY=t.clay||CLAY; MUT=t.mut||MUT;
   FONT=t.font||FONT; HANDLE=t.handle||HANDLE; CAPSTYLE=t.capStyle||CAPSTYLE;
   LATIN_FONT=t.latinFont||LATIN_FONT;
+  if(t.bgStyle){ BG_STYLE=t.bgStyle; BG_BRAND=t.bgBrand!==false; BG_COLOR=t.bgColor||null; }
+  if(t.bgImage){ BGI.src=t.bgImage; BG_STYLE=BG_STYLE||'image'; }
+  if(t.pip) PIP_SHAPE=t.pip; setPip(PIP_SHAPE);
   if(typeof t.capWords==='number') CAP_WORDS=t.capWords;      /* 2 = 1–2 words at a time · 4 = 3–4 · 0 = whole lines */
   if(typeof t.capScale==='number') CAP_SCALE=t.capScale;      /* caption size (1 = the old big size) */
   FONT=_fontFace(FONT,t.fontFile); LATIN_FONT=_fontFace(LATIN_FONT,t.latinFontFile);
@@ -56,13 +62,15 @@ function init(d){
     if(Array.isArray(st.brollClips)) BROLL=st.brollClips;
     if(typeof st.cardTop==='number') CARD_TOP=st.cardTop;
     if(Array.isArray(st.capJaw)&&st.capJaw.length) CAP_JAW=st.capJaw;   /* 38_jaw.py */
+    if(Array.isArray(st.faceBox)&&st.faceBox.length===4) FACE_BOX=st.faceBox;   /* 38_jaw.py — the PiP frame zooms on it */
     if(st.outro){ OUTRO_T={...OUTRO_T,...st.outro}; if(Array.isArray(st.outro.chips)) RECAP=st.outro.chips.map(c=>[c]); }
     if(Array.isArray(st.stickers)) STICK=st.stickers;
     BEHIND_OFF=Array.isArray(st.behindOff)?st.behindOff:[];
     if(st.brNeed&&typeof BR_NEED==='object'){ for(const k in st.brNeed) BR_NEED[k]=st.brNeed[k]; }
     if(Array.isArray(st.gen)) GEN=st.gen.map(g=>({...g})); if(st.genFrames) GEN_FR=st.genFrames; }
   if(t.stack&&typeof t.stack==='object') STK={...STK,...t.stack};   /* «طبقات» — theme.json ← stack:{fill,shade,accent,font,weight} */
-  return Promise.all([preloadBroll(),preloadGen(),preloadStack(),fontReady()]);   /* يرجّع Promise — المحرّك ينتظر تحميل لقطات البي-رول وأقنعة «طبقات» (إن وُجدت) */
+  const _bgi=BGI.src?(BGI.decode?BGI.decode().catch(()=>0):Promise.resolve()):Promise.resolve();
+  return Promise.all([preloadBroll(),preloadGen(),preloadStack(),fontReady(),_bgi,...(window.READY||[])]);   /* يرجّع Promise — المحرّك ينتظر تحميل لقطات البي-رول وأقنعة «طبقات» (إن وُجدت) */
 }
 /* ⛔ 28 سبتمبر: خط الثيم لازم يكتمل **بحروفه العربية** قبل أول رسم — قوقل فونتس يقسم الخط لأجزاء، و document.fonts.load
    بلا نص عربي ينزّل الجزء اللاتيني بس؛ فأي قياس (طبقات، كشيدة، التفاف الكابشن) ينحسب بخط بديل أضيق ~20٪.
@@ -109,6 +117,11 @@ const R_LOWER={x:350,y:1370,w:380,h:520,r:32};   /* كرت صغير تحت — �
    بكرت 9:16 كامل بلا قصّ. عين المشاهد تمشي بخط واحد من فوق لتحت. لا تستخدم R_STAGE/R_SIDE (الفيديو بالنص + رسم فوق الراس
    + كابشن تحت = ثلاث نقاط تركيز، المشاهد يتوه). R_STAGE/R_SIDE باقيتان للتوافق فقط. */
 const R_DOWN={x:214,y:760,w:652,h:1160,r:40};
+/* 🟣 HibAI PiP: the speaker small in a frame (bottom-left, inside the safe zone and away from the buttons column), visuals behind.
+   theme.json ← pip: 'circle' | 'square' | 'rect'. The crop zooms on the face (studio.json ← faceBox from 38_jaw.py). Scenes: {s,e,m:'R_PIP'} */
+const R_PIP={x:70,y:1130,w:340,h:340,r:170,pip:true};
+function setPip(shape){ const S={circle:{x:70,y:1130,w:340,h:340,r:170},square:{x:70,y:1130,w:340,h:340,r:44},rect:{x:70,y:1010,w:300,h:460,r:36}}[shape]||null;
+  if(S) Object.assign(R_PIP,S); }
 /* 📱 استوديو الجوال (16 سبتمبر): المشاهد والملصقات وإطفاء «ورا الراس» تجي من studio.json عبر init({studio}) */
 let BEHIND_OFF=[]; const R_COLLAGE={x:0,y:1920,w:1080,h:1920,r:0};   /* كولاج: الفيديو تحت الشاشة، الشخص مقصوص فوق ورقة */
 let BROLL=[];   /* لقطات بي-رول من الاستوديو: {k,s,e,mode:'full'|'card'} */
@@ -146,7 +159,7 @@ function hookCenter(){ if(_HC) return _HC;
     if(xs.length>=5){ xs.sort((a,b)=>a-b); ys.sort((a,b)=>a-b); return (_HC=[xs[xs.length>>1],ys[ys.length>>1]]); } }
   return (_HC=[540,760]); }
 SCENE_LIST.push(['hookZoom',hookZoom,'video']);
-function rectByName(n){return ({R_FULL,R_DOWN,R_LOWER,R_STAGE,R_SIDE,R_COLLAGE,R_OFF:(typeof R_OFF!=='undefined'?R_OFF:R_FULL)})[n]||R_FULL;}   /* عند النداء لا عند التحميل — R_OFF يتعرّف بعدين */
+function rectByName(n){return ({R_FULL,R_DOWN,R_LOWER,R_STAGE,R_SIDE,R_COLLAGE,R_PIP,R_OFF:(typeof R_OFF!=='undefined'?R_OFF:R_FULL)})[n]||R_FULL;}   /* عند النداء لا عند التحميل — R_OFF يتعرّف بعدين */
 let STICK=[];
 /* 🆕 v2.5 «شرح كامل» (R_OFF): المتحدث يختفي — كرته ينزلق تحت الشاشة (نفس مقاس R_LOWER بس y=1920)
    والشاشة كلها للرسم. صوته يكمّل والكابشن يبقى تحت عند 1460. مرة أو مرتين بالفيديو، 4-8 ثوانٍ، عند
@@ -175,11 +188,16 @@ function vtrans(t){
 }
 function vrect(t){
   const {a,b,k}=vtrans(t);
-  return {x:lerp(a.x,b.x,k),y:lerp(a.y,b.y,k),w:lerp(a.w,b.w,k),h:lerp(a.h,b.h,k),r:lerp(a.r,b.r,k)};
+  return {x:lerp(a.x,b.x,k),y:lerp(a.y,b.y,k),w:lerp(a.w,b.w,k),h:lerp(a.h,b.h,k),r:lerp(a.r,b.r,k),pip:k>=1?b.pip:(k<=0?a.pip:false)};
 }
 /* قصّ الفيديو لمستطيل: ⛔ v3.8 قاعدة المستخدم — بالكرت القصّ ثابت من فوق راسه بمساحة آمنة (cardTop من 23_headcrop.py) بلا تتبع.
    kc: 0 = ملء الشاشة (faceAnchor) · 1 = كرت (cardTop + cardZoom) */
 function vcrop(R,sw,shh){
+  if(R.pip){   /* PiP: a box around the face (face ≈ 45% of the frame height), same aspect as the frame */
+    const fb=FACE_BOX||[sw*0.3,shh*0.22,sw*0.4,sw*0.4], kx=sw/1080, ky=shh/1920;
+    const ch=Math.min(shh,fb[3]*ky*2.3), cw=Math.min(sw,ch*R.w/R.h), sc=R.w/cw;
+    const sx=cl(fb[0]*kx+fb[2]*kx/2-cw/2,0,sw-cw), sy=cl(fb[1]*ky+fb[3]*ky*0.55-ch/2,0,shh-ch);
+    return {sc,sx,sy,cw,ch}; }
   const kc=CARD_TOP==null?0:cl((1919-R.h)/300,0,1), z=lerp(1,CARD_ZOOM,kc);
   const sc=Math.max(R.w/sw,R.h/shh)*z, cw=R.w/sc, ch=R.h/sc;
   const sx=(sw-cw)/2, sy0=(shh-ch)*FACE_ANCH, sy=CARD_TOP==null?sy0:lerp(sy0,cl(CARD_TOP*shh,0,shh-ch),kc);
@@ -190,7 +208,7 @@ function drawVideo(t){
   X.save();
   if(R.r>0.5){sh(70,26,0.26);X.fillStyle='#000';rr(R.x,R.y,R.w,R.h,R.r);X.fill();nsh();}
   rr(R.x,R.y,R.w,R.h,R.r);X.clip();
-  if(T.k<1&&T.a!==T.b&&CARD_TOP!=null){
+  if(T.k<1&&T.a!==T.b&&(CARD_TOP!=null||T.a.pip||T.b.pip)){
     /* 🎞️ انتقال ناعم (HibAI 17 أكتوبر: «أصعد وأنزل، المفروض تكون سموذ»): كان kc ينحسب من المستطيل المتحرّك، فالقصّ يقفز لفوق
        بأول 300 بكسل من التصغير والكرت بعده ينزل ← الوجه ينزل ويطلع وينزل. الحين مكان الصورة (مقياس + إزاحة) لكل مشهد ثابت،
        ونمزجهم بنفس تسهيل المستطيل ← كل نقطة بالصورة تمشي بخط واحد. الصورة تغطي المستطيل دايماً (كل الحدود خطية بـk). */
@@ -205,7 +223,8 @@ function drawVideo(t){
     if(CVR_OK){const kx=CVR.naturalWidth/sw,ky=CVR.naturalHeight/shh;X.drawImage(CVR,c.sx*kx,c.sy*ky,c.cw*kx,c.ch*ky,R.x,R.y,R.w,R.h);}
   }
   X.restore();
-  if(R.r>0.5){X.save();X.strokeStyle=cINK(0.10);X.lineWidth=3;rr(R.x,R.y,R.w,R.h,R.r);X.stroke();X.restore();}
+  if(R.pip){X.save();X.strokeStyle=ACC;X.lineWidth=7;rr(R.x,R.y,R.w,R.h,R.r);X.stroke();X.restore();}   /* PiP ring in the accent colour */
+  else if(R.r>0.5){X.save();X.strokeStyle=cINK(0.10);X.lineWidth=3;rr(R.x,R.y,R.w,R.h,R.r);X.stroke();X.restore();}
 }
 /* ---------- icons ---------- */
 function iCaption(x,y,s,c){X.save();X.strokeStyle=c;X.lineWidth=s*0.09;X.lineCap='round';
@@ -243,6 +262,11 @@ function grid(){ if(!GRID) return; X.save();
   for(let x=60;x<W;x+=60){X.beginPath();X.moveTo(x+0.5,0);X.lineTo(x+0.5,H);X.stroke();}
   for(let y=60;y<H;y+=60){X.beginPath();X.moveTo(0,y+0.5);X.lineTo(W,y+0.5);X.stroke();}
   X.restore();}
+/* HibAI background behind split screens, PiP, cut-outs and full-screen visuals. No bgStyle → the old plain colour + grid. */
+function backdrop(t){
+  if(!BG_STYLE||typeof HBG==='undefined'){ grid(); return; }
+  HBG.draw(X,BG_STYLE,t,W,H,{brand:BG_BRAND,pal:{bg:BG,ink:INK,acc:ACC,clay:CLAY},color:BG_COLOR,img:BGI,frame:VF});
+}
 function badge(t){
   /* الشارة أول الفيديو بس ثم تختفي: اسمه مكتوب بالمنصة نفسها وبكرت النهاية،
      وبقاؤها طول الفيديو ياكل أعلى الشاشة اللي يحتاجه الرسم بـR_DOWN.
@@ -319,7 +343,21 @@ function _capRest(c,t){
   if(!part.length) return null;
   return t<L.s?{...c,w:part,e:Math.min(c.e,L.s)}:{...c,w:part,s:Math.max(c.s,L.e)};
 }
+/* HibAI: captions over a light background (white, white grid, light colour, light image) turn dark — white words would vanish.
+   Measured once from the real background (tiny render), so it works for any style, brand colours and uploaded images. */
+let _BGL=null;
+function bgLight(){ if(_BGL!==null) return _BGL; if(!BG_STYLE||typeof HBG==='undefined') return (_BGL=!DARK());
+  if(BG_STYLE==='image'&&!(BGI.complete&&BGI.naturalWidth)) return false;
+  try{ const c=document.createElement('canvas'); c.width=54; c.height=96; const g=c.getContext('2d');
+    HBG.draw(g,BG_STYLE,1,54,96,{brand:BG_BRAND,pal:{bg:BG,ink:INK,acc:ACC,clay:CLAY},color:BG_COLOR,img:BGI,frame:null});
+    const d=g.getImageData(0,0,54,96).data; let sum=0; for(let i=0;i<d.length;i+=4) sum+=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2];
+    _BGL=sum/(d.length/4)/255>0.55; }catch(e){ _BGL=false; }
+  return _BGL; }
+function capOnLight(t){ if(t>=VEND) return false; const R=vtarget(t);
+  const overVideo=isFull(R)&&!cutoutActive(t)&&!headoutActive(t)&&!R.off;
+  return !overVideo&&bgLight(); }
 function caption(t){
+  const LIT=capOnLight(t), INKC=LIT?(DARK()?BG:'#111111'):'#FFFFFF';   /* caption word colour: white over video · dark over a light background */
   if(SCENES.some(sc=>sc.nocap&&t>=sc.s&&t<sc.e)) return;   /* {s,e,m,nocap:true}: مشهد بلا كابشن — لما اللوحة فوق فيها النص نفسه (قرار المستخدم 8 سبتمبر) */
   /* لا تكرّر: لو الكلام يمرّ ورا الشخص بهاللحظة، كرت الكابشن يختفي */
   if(BEHIND&&PRS_OK&&isFull(vrect(t))&&BEHIND.lines.some(l=>t>=l.s&&t<=l.e&&!BEHIND_OFF.includes(l.card))) return;
@@ -381,8 +419,8 @@ function caption(t){
       X.save(); const cxw=x-i.w/2; X.translate(cxw+f.dx,cy+lift+f.dy); X.scale(f.ps,f.ps); X.translate(-cxw,-(cy+lift));
       if(f.clip<1){X.beginPath();X.rect(x-i.w*f.clip-4,cy-fs,i.w*f.clip+8,fs*2);X.clip();}
       if(CAPSTYLE==='bar'&&act){ X.fillStyle=ACC; rr(x-i.w-16,cy+lift-fs*0.66,i.w+32,fs*1.28,18); X.fill(); }
-      X.shadowColor='rgba(0,0,0,0.75)';X.shadowBlur=22;X.shadowOffsetY=5;
-      X.fillStyle=(CAPSTYLE==='bar'&&act)?onACC():((i.hot&&sp)?ACC:'#FFFFFF');
+      if(LIT){X.shadowColor='rgba(255,255,255,0.5)';X.shadowBlur=12;X.shadowOffsetY=0;} else {X.shadowColor='rgba(0,0,0,0.75)';X.shadowBlur=22;X.shadowOffsetY=5;}
+      X.fillStyle=(CAPSTYLE==='bar'&&act)?onACC():((i.hot&&sp)?ACC:INKC);
       X.fillText(i.t,x,cy+lift);
       X.shadowColor='transparent';X.shadowBlur=0;
       if(CAPSTYLE==='underline'&&sp){ const k=act?ease(Math.min(1,(t-i.s)/0.22)):1; X.fillStyle=ACC; rr(x-i.w*k,cy+lift+fs*0.52,i.w*k,10,5); X.fill(); }
@@ -408,7 +446,8 @@ function caption(t){
     const LH2=Math.round(FS2*1.33); const bh2=LL.length*LH2;
     /* ⛔ قاعدة HibAI (23 سبتمبر): الكابشن ما ينكتب على وجهه أبداً. الستايلات بلا كرت كانت تثبّت عند 1400
        مهما كان وضع الفيديو، فبوضع الكرت (R_DOWN/R_LOWER) تطيح الكلمات على وجهه. الحين تطلع فوق الكرت. */
-    const _Rc=vtarget(t), by2=(_Rc.y>700&&!_Rc.off)?Math.max(200,_Rc.y-46-bh2):capTop(t,bh2,1400-bh2);
+    const _Rc=vtarget(t), _cut2=(cutoutActive(t)||headoutActive(t))&&PTOP>200;   /* HibAI: cut-out → above the head of the cut-out person, not the old jaw */
+    const by2=_cut2?Math.max(200,PTOP-46-bh2):(_Rc.y>700&&!_Rc.off)?Math.max(200,_Rc.y-46-bh2):capTop(t,bh2,1400-bh2);
     X.save();X.globalAlpha=a;X.translate(540,by2+bh2/2+dy);X.scale(sc,sc);X.translate(-540,-(by2+bh2/2));
     X.textAlign='right';X.textBaseline='middle'; X.font='900 '+FS2+'px '+FONT;
     let lastX=null,lastY=null;
@@ -1082,7 +1121,8 @@ function draw(t){
   /* تصفير حالة الرسم بكل فريم — ضمانة إن أي فريم يبدأ نظيفاً */
   X.setTransform(1,0,0,1,0,0); X.globalAlpha=1; X.filter='none';
   X.shadowColor='transparent'; X.shadowBlur=0; X.shadowOffsetY=0; X.globalCompositeOperation='source-over';
-  X.clearRect(0,0,W,H);X.fillStyle=BG;X.fillRect(0,0,W,H);safe(grid,t,'grid');
+  X.clearRect(0,0,W,H);X.fillStyle=BG;X.fillRect(0,0,W,H);
+  if(!isFull(vtarget(t))||vtrans(t).k<1||t>=VEND||(t<VEND&&cutoutActive(t))) safe(backdrop,t,'backdrop');   /* hidden under a full-screen video — skip the work */
   if(t<VEND) safe(genBg,t,'genBg');   /* 🖼️ v3.2: صورة/مقطع مولّد كخلفية وراه (وضع bg) */
   const _cut=(t<VEND)&&cutoutActive(t), _ho=(t<VEND)&&headoutActive(t);
   if(t<VEND&&_ho){safe(headOut,t,'headout');}
@@ -1110,5 +1150,5 @@ window.shot=q=>document.getElementById('cv').toDataURL('image/jpeg',q);
 </script>
 <!-- 🎞️ معرض الحركات (references/moves.md §3): FX.<id>(MV, t, o) داخل مشاهدك — FX من motion/moves.js، وMV (أدوات النص والتوقيت والثيم) من moves-compose.js.
      04_render_frames.js و08_safe_check.js ينسخونهم للمجلد لو ناقصين. مشاهدك تحتهم (بعد هالسطر). -->
-<script src="styles.js"></script><script src="moves.js"></script><script src="moves-compose.js"></script><script src="hibai-kit.js"></script>
+<script src="backgrounds.js"></script><script src="styles.js"></script><script src="moves.js"></script><script src="moves-compose.js"></script><script src="hibai-kit.js"></script>
 </body></html>

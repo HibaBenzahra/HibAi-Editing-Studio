@@ -13,15 +13,17 @@ const path=require('path'), fs=require('fs');
 const W=path.resolve(process.argv[2])+path.sep;
 /* 🎞️ معرض الحركات: compose.html يطلب moves.js + moves-compose.js من مجلد الشغل — لو ناقصين ننسخهم من السكل قبل الفتح
    (بدونهم FX ما يتعرّف والمشهد يتخطّى). وcompose قديم بلا الوسمين: نركّبهم بعد الفتح عشان FX/MV يشتغلون وقت الرسم. */
-const MOVES_SRC={'moves.js':path.join(__dirname,'..','motion','moves.js'),'moves-compose.js':path.join(__dirname,'moves-compose.js'),'styles.js':path.join(__dirname,'..','motion','styles.js'),'hibai-kit.js':path.join(__dirname,'hibai-kit.js')};
+const MOVES_SRC={'moves.js':path.join(__dirname,'..','motion','moves.js'),'moves-compose.js':path.join(__dirname,'moves-compose.js'),'styles.js':path.join(__dirname,'..','motion','styles.js'),'hibai-kit.js':path.join(__dirname,'hibai-kit.js'),'backgrounds.js':path.join(__dirname,'..','motion','backgrounds.js')};
 function movesCopy(){ const h=fs.readFileSync(W+'compose.html','utf8');
   for(const [f,src] of Object.entries(MOVES_SRC)) if(h.includes('src="'+f+'"')&&!fs.existsSync(W+f)&&fs.existsSync(src)){ fs.copyFileSync(src,W+f); console.log('🎞️ نسخت '+f+' لمجلد الشغل'); }
   /* 74 آية بسكينة: الخط العثماني يتحمّل من مجلد الشغل (MV.needFont) */
   const QF=path.join(__dirname,'..','motion','fonts','AmiriQuran-Regular.ttf'); if(h.includes('ayahCalm')&&!fs.existsSync(W+'AmiriQuran-Regular.ttf')&&fs.existsSync(QF)){ fs.copyFileSync(QF,W+'AmiriQuran-Regular.ttf'); console.log('🎞️ نسخت خط Amiri Quran لمجلد الشغل'); }
   /* 🎨 بنك الستايلات: MV.useStyle يحمّل خطوط الستايل من مجلد الشغل */
   if(h.includes('useStyle')){ const FD=path.join(__dirname,'..','motion','fonts'); for(const f of fs.readdirSync(FD).filter(f=>/\.ttf$/.test(f)&&!/Quran/.test(f))) if(!fs.existsSync(W+f)) fs.copyFileSync(path.join(FD,f),W+f); } }
-async function movesInject(p){ if(await p.evaluate(()=>!!(window.FX&&window.MV&&window.STYLES))) return;
-  for(const f of ['styles.js','moves.js','moves-compose.js','hibai-kit.js']){ const src=[W+f,MOVES_SRC[f]].find(x=>fs.existsSync(x)); if(src) await p.addScriptTag({path:src}); } }
+async function movesInject(p){
+  if(!await p.evaluate(()=>!!window.HBG)){ const bs=[W+'backgrounds.js',MOVES_SRC['backgrounds.js']].find(x=>fs.existsSync(x)); if(bs) await p.addScriptTag({path:bs}); }   /* older compose.html: still get the HibAI backgrounds */
+  if(await p.evaluate(()=>!!(window.FX&&window.MV&&window.STYLES))) return;
+  for(const f of ['backgrounds.js','styles.js','moves.js','moves-compose.js','hibai-kit.js']){ const src=[W+f,MOVES_SRC[f]].find(x=>fs.existsSync(x)); if(src) await p.addScriptTag({path:src}); } }
 const SHOT=process.argv.includes('--shot');
 const CFG=JSON.parse(fs.readFileSync(W+'sfx.json','utf8'));
 const THEME=fs.existsSync(W+'theme.json')?JSON.parse(fs.readFileSync(W+'theme.json','utf8')):{};
@@ -157,6 +159,9 @@ const FLAT_B='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2
       window.draw(t); if(window.MV&&MV.pending&&MV.pending()) await MV.settle();   /* فريم بوقت ثاني/خط إضافي (65، 74) يتحمّل قبل القياس */
       /* 6.0: MV.frameAt (فريم مجمّد من vfr/ بالانتقالات) يرسم نفس اللون المسطّح — صورة فيديو مو نص (كانت إنذار كاذب) */
       await window.setFrame(FA); swap(IA); window.__SAFE_FLAT=IA; window.draw(t); const A=X.getImageData(0,0,W,H).data;
+      /* HibAI backgrounds (topo, gradient, white grid…) fill the whole screen — measure them alone at the same moment so they never count as text */
+      let Bk=null; if(typeof backdrop==='function'&&typeof BG_STYLE!=='undefined'&&BG_STYLE){ X.save(); X.setTransform(1,0,0,1,0,0); X.globalAlpha=1;
+        X.fillStyle=bg||'#000'; X.fillRect(0,0,W,H); try{ backdrop(t); }catch(e){} X.restore(); Bk=X.getImageData(0,0,W,H).data; }
       await window.setFrame(FB); swap(IB); window.__SAFE_FLAT=IB; window.draw(t); const C=X.getImageData(0,0,W,H).data;
       window.__SAFE_FLAT=null;
       /* لقطة ما تغيّرت بين اللونين = الفيديو ما انرسم (شرح كامل R_OFF أو كرت النهاية) — ما نتخطّاها:
@@ -191,6 +196,7 @@ const FLAT_B='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2
             // خلفية أو ظلّ خفيف فوقها (ظلال الكروت مو نصاً — لا تُحسب)
             if(Math.abs(r-B[0])<=50&&Math.abs(g-B[1])<=50&&Math.abs(b-B[2])<=50) continue;
             if(r<18&&g<18&&b<18) continue;                                                   // ظل أسود
+            if(Bk&&Math.abs(r-Bk[i])<=8&&Math.abs(g-Bk[i+1])<=8&&Math.abs(b-Bk[i+2])<=8) continue;   // the HibAI background itself (same moment, exact match)
             if(F&&Math.abs(r-F[0])<=60&&Math.abs(g-F[1])<=60&&Math.abs(b-F[2])<=60) continue;   // the strip's own backdrop
             ink++;
           }

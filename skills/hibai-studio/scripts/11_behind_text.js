@@ -19,6 +19,13 @@
 const path=require('path'), fs=require('fs'), cp=require('child_process');
 const W=path.resolve(process.argv[2])+path.sep, MODE=process.argv[3]||'plan';
 const SC=path.dirname(path.resolve(process.argv[1]))+path.sep;
+/* HibAI: the cut-out works everywhere — Mac → Apple Vision (personmask.swift) · Windows/Linux, or a Mac without Xcode tools → rembg (personmask.py) */
+const PY=process.platform==='win32'?'python':'python3';
+function maskCmd(){ const bin=W+'bt/personmask';
+  if(process.platform==='darwin'){ if(fs.existsSync(bin)) return JSON.stringify(bin);
+    try{ cp.execSync('swiftc -O -o '+JSON.stringify(bin)+' '+JSON.stringify(SC+'personmask.swift'),{stdio:'pipe'}); return JSON.stringify(bin); }
+    catch(e){ console.log('ℹ️ no Xcode tools — cutting with rembg instead (python -m pip install "rembg[cpu]")'); } }
+  return PY+' '+JSON.stringify(SC+'personmask.py'); }
 const caps=JSON.parse(fs.readFileSync(W+'caps.json','utf8'));
 const FPS=30, MAXW=4, MINDUR=0.85;
 
@@ -44,15 +51,16 @@ if(MODE==='drop'){
   process.exit(0);
 }
 
-/* ── ماك فقط (مضاف): القصّ يعتمد على Vision عبر swiftc ── */
+/* ── the cut-out: Mac → Vision via swiftc · Windows/Linux (or a Mac without Xcode) → rembg (personmask.py) ── */
 if(['build','stack','cutout','headout','person'].indexOf(MODE)>=0){
-  let hasSwift=false;
+  let hasSwift=false, hasRembg=false;
   if(process.platform==='darwin'){
     try{ hasSwift = cp.spawnSync('swiftc',['--version'],{stdio:'ignore'}).status===0; }catch(e){ hasSwift=false; }
   }
-  if(!hasSwift){
-    console.log('⛔ «الكلام ورا الشخص» يحتاج ماك + swiftc — نظامك: '+process.platform);
-    console.log('   بقية السكل يشتغل عادي: الكابشن والموشن قرافكس والمؤثرات والختام.');
+  if(!hasSwift){ try{ hasRembg = cp.spawnSync(PY,['-c','import rembg, PIL'],{stdio:'ignore'}).status===0; }catch(e){ hasRembg=false; } }
+  if(!hasSwift&&!hasRembg){
+    console.log('⛔ the cut-out needs rembg on this computer ('+process.platform+'): '+PY+' -m pip install "rembg[cpu]" pillow');
+    console.log('   (Mac: or Xcode tools — xcode-select --install). Everything else in the skill works without it.');
     process.exit(20);
   }
 }
@@ -87,16 +95,12 @@ if(MODE==='cutout'||MODE==='headout'||MODE==='person'){
   const NVF2=fs.readdirSync(W+'vfr').filter(f=>f.endsWith('.jpg')).length;
   const f0=Math.max(1,Math.floor(a*FPS)+1), f1=Math.min(NVF2,Math.ceil(b*FPS)+1);
   fs.mkdirSync(W+'bt/src',{recursive:true}); fs.mkdirSync(W+'bt/mask',{recursive:true}); fs.mkdirSync(W+'bt/person',{recursive:true});
-  const BIN2=W+'bt/personmask';
-  if(!fs.existsSync(BIN2)){
-    try{ cp.execSync('swiftc -O -o '+JSON.stringify(BIN2)+' '+JSON.stringify(SC+'personmask.swift'),{stdio:'pipe'}); }
-    catch(e){ console.log('❌ تحتاج أدوات Xcode: xcode-select --install'); process.exit(4); }
-  }
+  const BIN2=maskCmd();
   let n=0;
   for(let f=f0;f<=f1;f++){ const id=String(f).padStart(5,'0');
     if(fs.existsSync(W+'vfr/'+id+'.jpg')){ fs.copyFileSync(W+'vfr/'+id+'.jpg', W+'bt/src/'+id+'.jpg'); n++; } }
   console.log('فريمات القصّ:',n,'— أقصّك من الخلفية…');
-  cp.execSync(JSON.stringify(BIN2)+' '+JSON.stringify(W+'bt/src')+' '+JSON.stringify(W+'bt/mask')+' accurate 2.5',{stdio:'inherit'});
+  cp.execSync(BIN2+' '+JSON.stringify(W+'bt/src')+' '+JSON.stringify(W+'bt/mask')+' accurate 2.5',{stdio:'inherit'});
   cp.execSync('ffmpeg -v error -start_number '+f0+' -i '+JSON.stringify(W+'bt/src/%05d.jpg')+
     ' -start_number '+f0+' -i '+JSON.stringify(W+'bt/mask/%05d.png')+' -frames:v '+(f1-f0+1)+
     ' -filter_complex "[1:v]format=gray,scale=1080:1920[a];[0:v][a]alphamerge,format=rgba"'+
@@ -115,7 +119,7 @@ if(MODE==='cutout'||MODE==='headout'||MODE==='person'){
       const py='import json,os,statistics\nfrom PIL import Image\nW='+JSON.stringify(W)+';f0='+f0+';f1='+f1+'\nxs0=[];xs1=[];ys0=[];ys1=[]\n'+
         'for n in range(f0,f1+1,3):\n p=W+"bt/mask/%05d.png"%n\n if not os.path.exists(p): continue\n bb=Image.open(p).convert("L").point(lambda v:255 if v>140 else 0).getbbox()\n if not bb: continue\n xs0.append(bb[0]);ys0.append(bb[1]);xs1.append(bb[2]);ys1.append(bb[3])\n'+
         'print(json.dumps({"x0":statistics.median(xs0),"x1":statistics.median(xs1),"y0":statistics.median(ys0),"y1":statistics.median(ys1),"n":len(xs0)}) if xs0 else "null")';
-      const hb=JSON.parse(cp.execSync('python3 -c '+JSON.stringify(py),{stdio:'pipe'}).toString().trim());
+      const hb=JSON.parse(cp.execSync(PY+' -c '+JSON.stringify(py),{stdio:'pipe'}).toString().trim());
       if(hb){ prev.headbox=prev.headbox||{}; prev.headbox[String(a)]=hb; }
     }catch(e){ console.log('⚠️ ما قدرت أحسب الحدود الثابتة (يحتاج PIL) — الكرت بيتبع الجسم بكل فريم'); }
   }
@@ -136,12 +140,8 @@ if(!pick.length){ console.log('عطني أرقام الجُمل: '+MODE+' 1 9   
 if(!fs.existsSync(W+'vfr')){ console.log('❌ ما فيه مجلد vfr — استخرج الفريمات أول'); process.exit(3); }
 
 /* 1) بناء أداة القصّ مرة وحدة */
-const BIN=W+'bt/personmask';
+const BIN=maskCmd();
 fs.mkdirSync(W+'bt/src',{recursive:true}); fs.mkdirSync(W+'bt/mask',{recursive:true}); fs.mkdirSync(W+'bt/person',{recursive:true});
-if(!fs.existsSync(BIN)){
-  try{ cp.execSync('swiftc -O -o '+JSON.stringify(BIN)+' '+JSON.stringify(SC+'personmask.swift'),{stdio:'pipe'}); }
-  catch(e){ console.log('❌ ما قدرت أبني أداة القصّ — تحتاج أدوات Xcode: xcode-select --install'); process.exit(4); }
-}
 
 /* 2) الفريمات المطلوبة فقط (مو الفيديو كله) */
 const NVF=fs.readdirSync(W+'vfr').filter(f=>f.endsWith('.jpg')).length;
@@ -164,7 +164,7 @@ for(const [f0,f1] of ranges) for(let f=f0;f<=f1;f++){
 console.log('فريمات التأثير:',copied,'— أقصّ الشخص فيها…');
 
 /* 3) القصّ + بيانات الوجه */
-cp.execSync(JSON.stringify(BIN)+' '+JSON.stringify(W+'bt/src')+' '+JSON.stringify(W+'bt/mask')+' accurate 2.5',{stdio:'inherit'});
+cp.execSync(BIN+' '+JSON.stringify(W+'bt/src')+' '+JSON.stringify(W+'bt/mask')+' accurate 2.5',{stdio:'inherit'});
 
 /* 4) دمج القناع كشفافية → صورة الشخص وحده (كل مدى على حدة) */
 for(const [f0,f1] of ranges){

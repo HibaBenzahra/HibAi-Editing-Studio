@@ -3,7 +3,8 @@
 
   python 38_jaw.py <work>            ← reads <work>/vfr/*.jpg (the cut video, 30 fps, 1080x1920)
 
-Writes studio.json ← "capJaw": [[t, chinY], ...] every 0.2 s (output-video seconds and pixels).
+Writes studio.json ← "capJaw": [[t, chinY], ...] every 0.2 s (output-video seconds and pixels)
+                   ← "faceBox": [x, y, w, h] the usual face position (the PiP frame zooms on it).
 The engine puts the caption top just under chinY in full-screen shots, and never lower than the safe
 zone allows (caption bottom ≤ 1480). No face found in a stretch → that stretch keeps the default place.
 Needs: python -m pip install opencv-python-headless (model downloads once, 230 KB)
@@ -35,6 +36,7 @@ if not os.path.exists(MODEL):
     urllib.request.urlretrieve(MODEL_URL, MODEL)
 det = None
 raw = []                               # (t, chin or None)
+boxes = []                             # face boxes (x, y, w, h) in 1080x1920 px — for the PiP frame
 for i in range(0, len(frames), STEP):
     img = cv2.imread(os.path.join(VFR, frames[i]))
     if img is None:
@@ -52,6 +54,7 @@ for i in range(0, len(frames), STEP):
             eye_y = (f[5] + f[7]) / 2; mouth_y = (f[11] + f[13]) / 2
             jaw = max(y + fh, mouth_y + (mouth_y - eye_y) * 0.75)   # chin ≈ a bit below the mouth
             chin = jaw * SCALE * (1920 / h)
+            k = SCALE * (1920 / h); boxes.append((x * k, y * k, fw * k, fh * k))
     raw.append((round(i / FPS, 2), chin))
 
 # smooth: median over ±0.6 s, ignore gaps; keep steady so captions don't wobble
@@ -66,6 +69,9 @@ found = len(out) / max(1, len(raw))
 sp = os.path.join(W, "studio.json")
 st = json.load(open(sp, encoding="utf-8")) if os.path.exists(sp) else {}
 st["capJaw"] = out
+if boxes:                              # median face box: the PiP circle/square zooms on the face
+    med = lambda i: sorted(b[i] for b in boxes)[len(boxes) // 2]
+    st["faceBox"] = [round(med(0)), round(med(1)), round(med(2)), round(med(3))]
 json.dump(st, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 ys = [y for _, y in out]
 print(f"✅ chin found in {found:.0%} of the video" + (f" · chin y {min(ys)}–{max(ys)} px" if ys else "") + " → studio.json ← capJaw")

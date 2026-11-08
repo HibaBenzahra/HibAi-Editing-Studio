@@ -5,6 +5,7 @@
   python 42_web_assets.py <work> icon  <set:name> [--color theme|#hex]      ← UI icon (Iconify: lucide, tabler, ph, mdi, solar…)
   python 42_web_assets.py <work> shot  <url> [--mobile] [--full] [--name x] ← screenshot of a public web page (Chrome)
   python 42_web_assets.py <work> find  <words>                              ← suggest logo slugs / icon names for a word
+  python 42_web_assets.py <work> rec   <video> --name x [--from s] [--to s]  ← the user's screen recording → frames for HK.spot
 
 Examples:  logo claude · logo chatgpt · logo instagram · icon lucide:folder-open · icon ph:sparkle-fill · shot https://claude.ai --mobile
 Every file gets a .json next to it (source + licence). Logos keep their real brand colour unless --color says otherwise.
@@ -114,18 +115,37 @@ const exe=cands.find(c=>c&&fs.existsSync(c));
                "license": "screenshot of a public page — editorial use"}, open(out[:-4] + ".json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"✅ assets/shot-{nm}.png  «{r.stdout.strip()[:60]}»")
 
+def rec(work, src, name, t0, t1):
+    """screen recording → assets/rec/<name>/0001.jpg … (30 fps, 1080 wide) for HK.spot(t, {rec:{name, n}}) — HK.rec(name, n) preloads"""
+    if not os.path.exists(src): sys.exit(f"❌ no such video: {src}")
+    nm = slug(name or os.path.splitext(os.path.basename(src))[0])[:40] or "rec"
+    d = os.path.join(work, "assets", "rec", nm); os.makedirs(d, exist_ok=True)
+    for f in os.listdir(d):
+        if f.endswith(".jpg"): os.remove(os.path.join(d, f))
+    cut = (["-ss", str(t0)] if t0 else []) + (["-to", str(t1)] if t1 else [])
+    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", *cut, "-i", src, "-vf", "fps=30,scale=1080:-2", "-q:v", "2",
+                    os.path.join(d, "%04d.jpg")], check=True)
+    n = len([f for f in os.listdir(d) if f.endswith(".jpg")])
+    from PIL import Image
+    w, h = Image.open(os.path.join(d, "0001.jpg")).size
+    json.dump({"kind": "screen recording", "src": os.path.basename(src), "n": n, "fps": 30, "size": [w, h]},
+              open(d + ".json", "w", encoding="utf-8"), indent=1)
+    print(f"✅ assets/rec/{nm}/ · {n} frames ({n / 30:.1f} s, {w}x{h}) → HK.rec('{nm}', {n}) · HK.spot(t, {{rec:{{name:'{nm}', n:{n}}}, …}})")
+
 if __name__ == "__main__":
-    a = [x for x in sys.argv[1:] if not x.startswith("--")]
+    VAL = ("--color", "--name", "--from", "--to")           # options that take a value
+    a = [x for i, x in enumerate(sys.argv[1:]) if not x.startswith("--") and (i == 0 or sys.argv[i] not in VAL)]
     flags = sys.argv[1:]
     opt = lambda k: flags[flags.index(k) + 1] if k in flags and flags.index(k) + 1 < len(flags) else None
     if len(a) < 3:
         sys.exit(__doc__)
     work, cmd, arg = os.path.abspath(a[0]), a[1], " ".join(a[2:])
-    for k in ("--color", "--name"):                       # option values aren't part of the argument
+    for k in ("--color", "--name", "--from", "--to"):                       # option values aren't part of the argument
         v = opt(k)
         if v and arg.endswith(v): arg = arg[: -len(v)].strip()
     if cmd == "logo": logo(work, arg, opt("--color"))
     elif cmd == "icon": icon(work, arg, opt("--color"))
     elif cmd == "shot": shot(work, arg, "--mobile" in flags, "--full" in flags, opt("--name"))
     elif cmd == "find": find(arg)
+    elif cmd == "rec": rec(work, arg, opt("--name"), opt("--from"), opt("--to"))
     else: sys.exit(__doc__)

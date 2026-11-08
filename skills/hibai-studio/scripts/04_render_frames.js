@@ -41,15 +41,17 @@ function findChrome(){
 const CHROME=findChrome();
 /* 🎞️ معرض الحركات: compose.html يطلب moves.js + moves-compose.js من مجلد الشغل — لو ناقصين ننسخهم من السكل قبل الفتح
    (بدونهم FX ما يتعرّف والمشهد يتخطّى). وcompose قديم بلا الوسمين: نركّبهم بعد الفتح عشان FX/MV يشتغلون وقت الرسم. */
-const MOVES_SRC={'moves.js':path.join(__dirname,'..','motion','moves.js'),'moves-compose.js':path.join(__dirname,'moves-compose.js'),'styles.js':path.join(__dirname,'..','motion','styles.js'),'hibai-kit.js':path.join(__dirname,'hibai-kit.js')};
+const MOVES_SRC={'moves.js':path.join(__dirname,'..','motion','moves.js'),'moves-compose.js':path.join(__dirname,'moves-compose.js'),'styles.js':path.join(__dirname,'..','motion','styles.js'),'hibai-kit.js':path.join(__dirname,'hibai-kit.js'),'backgrounds.js':path.join(__dirname,'..','motion','backgrounds.js')};
 function movesCopy(){ const h=fs.readFileSync(W+'compose.html','utf8');
   for(const [f,src] of Object.entries(MOVES_SRC)) if(h.includes('src="'+f+'"')&&!fs.existsSync(W+f)&&fs.existsSync(src)){ fs.copyFileSync(src,W+f); console.log('🎞️ نسخت '+f+' لمجلد الشغل'); }
   /* 74 آية بسكينة: الخط العثماني يتحمّل من مجلد الشغل (MV.needFont) */
   const QF=path.join(__dirname,'..','motion','fonts','AmiriQuran-Regular.ttf'); if(h.includes('ayahCalm')&&!fs.existsSync(W+'AmiriQuran-Regular.ttf')&&fs.existsSync(QF)){ fs.copyFileSync(QF,W+'AmiriQuran-Regular.ttf'); console.log('🎞️ نسخت خط Amiri Quran لمجلد الشغل'); }
   /* 🎨 بنك الستايلات: MV.useStyle يحمّل خطوط الستايل من مجلد الشغل */
   if(h.includes('useStyle')){ const FD=path.join(__dirname,'..','motion','fonts'); for(const f of fs.readdirSync(FD).filter(f=>/\.ttf$/.test(f)&&!/Quran/.test(f))) if(!fs.existsSync(W+f)) fs.copyFileSync(path.join(FD,f),W+f); } }
-async function movesInject(p){ if(await p.evaluate(()=>!!(window.FX&&window.MV&&window.STYLES))) return;
-  for(const f of ['styles.js','moves.js','moves-compose.js','hibai-kit.js']){ const src=[W+f,MOVES_SRC[f]].find(x=>fs.existsSync(x)); if(src) await p.addScriptTag({path:src}); } }
+async function movesInject(p){
+  if(!await p.evaluate(()=>!!window.HBG)){ const bs=[W+'backgrounds.js',MOVES_SRC['backgrounds.js']].find(x=>fs.existsSync(x)); if(bs) await p.addScriptTag({path:bs}); }   /* older compose.html: still get the HibAI backgrounds */
+  if(await p.evaluate(()=>!!(window.FX&&window.MV&&window.STYLES))) return;
+  for(const f of ['backgrounds.js','styles.js','moves.js','moves-compose.js','hibai-kit.js']){ const src=[W+f,MOVES_SRC[f]].find(x=>fs.existsSync(x)); if(src) await p.addScriptTag({path:src}); } }
 (async()=>{
   const puppeteer=resolvePuppeteer();
   const mode=process.argv[3]||'all';
