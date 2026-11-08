@@ -169,6 +169,34 @@ def clean(obj):
         if isinstance(prev.get("logo"), str) and Path(prev["logo"]).exists():
             idn["logo"] = prev["logo"]  # ما رفع شعاراً جديداً = نخلي القديم
     obj["identity"] = idn
+    hb = obj.get("hibai") if isinstance(obj.get("hibai"), dict) else None
+    if hb:   # HibAI dashboard uploads: font (.ttf/.otf) and background image → files next to the profile
+        for key, stem, kinds in (("latinFontUpload", "latin-font-upload", {"font/ttf": ".ttf", "font/otf": ".otf", "font/sfnt": ".ttf",
+                                   "application/x-font-ttf": ".ttf", "application/x-font-otf": ".otf", "application/vnd.ms-opentype": ".otf",
+                                   "application/octet-stream": None}),
+                                 ("fontUpload", "font-upload", {"font/ttf": ".ttf", "font/otf": ".otf", "font/sfnt": ".ttf",
+                                   "application/x-font-ttf": ".ttf", "application/x-font-otf": ".otf", "application/vnd.ms-opentype": ".otf",
+                                   "application/octet-stream": None}),
+                                 ("bgImage", "bg-upload", {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"})):
+            v = hb.get(key)
+            if isinstance(v, dict) and str(v.get("data", "")).startswith("data:"):
+                head, _, b64 = v["data"].partition(",")
+                mime = head[5:].split(";")[0]
+                ext = kinds.get(mime) or (Path(str(v.get("name", ""))).suffix.lower() if mime in kinds or key in ("fontUpload", "latinFontUpload") else None)
+                if ext not in (".ttf", ".otf", ".png", ".jpg", ".webp"):
+                    raise ValueError("صيغة الملف مو مدعومة: " + str(v.get("name", "")))
+                raw = base64.b64decode(b64)
+                if len(raw) > 8 * 1024 * 1024:
+                    raise ValueError("الملف كبير")
+                HOME.mkdir(parents=True, exist_ok=True)
+                for old in HOME.glob(stem + ".*"):
+                    old.unlink()
+                dst = HOME / (stem + ext)
+                dst.write_bytes(raw)
+                hb[key] = str(dst)
+            elif v is not None and not isinstance(v, str):
+                hb.pop(key, None)
+        obj["hibai"] = hb
     if obj.get("capStyle") not in CAP_STYLES | {"auto"}:
         obj["capStyle"] = "auto"
     if obj.get("digits") not in ("western", "arabic"):
@@ -245,6 +273,14 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
         if u.path == "/favicon.ico":
             return self._send(204, b"", "image/x-icon")
+        if u.path == "/motion/backgrounds.js":       # live background previews (same code as the video engine)
+            f = SKILL / "motion" / "backgrounds.js"
+            return self._send(200, f.read_bytes(), "text/javascript; charset=utf-8")
+        if u.path.startswith("/fonts/"):               # font previews in the dashboard (motion/fonts, read-only)
+            f = (SKILL / "motion" / "fonts" / Path(u.path[len("/fonts/"):]).name)
+            if f.suffix.lower() in (".ttf", ".otf") and f.exists():
+                return self._send(200, f.read_bytes(), "font/ttf" if f.suffix.lower() == ".ttf" else "font/otf")
+            return self._send(404, b"", "text/plain")
         if u.path == "/assets/pfp.png":              # HibAI footer photo
             f = SKILL / "onboarding" / "assets" / "pfp.png"
             return self._send(200, f.read_bytes(), "image/png") if f.exists() else self._send(404, b"", "text/plain")
@@ -252,7 +288,7 @@ class Handler(BaseHTTPRequestHandler):
             base = (SKILL / "motion" / "moves").resolve()
             ensure_previews(base)
             f = (base / (u.path[len("/moves/"):] or "index.html")).resolve()
-            ct = {".html": "text/html; charset=utf-8", ".json": "application/json; charset=utf-8", ".mp4": "video/mp4"}.get(f.suffix)
+            ct = {".html": "text/html; charset=utf-8", ".json": "application/json; charset=utf-8", ".mp4": "video/mp4", ".jpg": "image/jpeg"}.get(f.suffix)
             if ct and (base == f.parent or base in f.parents) and f.is_file():
                 return self._send(200, f.read_bytes(), ct)
             return self._send(404, {"ok": False})
@@ -490,6 +526,32 @@ def to_theme(args):
     t["capWords"] = int(hb.get("capWords") or t.get("capWords") or 4)
     t.setdefault("capScale", 0.8)
     t["latinFont"] = hb.get("latinFont") or t.get("latinFont") or "Inter"
+    fu = hb.get("fontUpload")                                      # uploaded font → used as the Arabic/Darija font
+    if isinstance(fu, str) and Path(fu).exists():
+        work.mkdir(parents=True, exist_ok=True); shutil.copyfile(fu, work / Path(fu).name); t["font"] = Path(fu).name
+    lu = hb.get("latinFontUpload")                                 # uploaded Latin font → Latin words
+    if isinstance(lu, str) and Path(lu).exists():
+        work.mkdir(parents=True, exist_ok=True); shutil.copyfile(lu, work / Path(lu).name); t["latinFont"] = Path(lu).name
+    if hb.get("capFx") == "font":                                  # key words in another font + the accent colour
+        t["hotFont"] = "Lalezar" if (t.get("font") or "") != "Lalezar" else "KO Mission"
+    else:
+        t.pop("hotFont", None)
+    if hb.get("capFx") == "big":
+        t["capWords"] = 1
+    bgc = hb.get("bg") or {}                                        # background style for split / full-visual scenes
+    if bgc.get("style") and bgc["style"] != "auto":
+        t["bgStyle"] = bgc["style"]
+        if bgc["style"] == "color" and bgc.get("color"): t["bgColor"] = bgc["color"]
+        t["bgBrand"] = bgc.get("brand", True) is not False
+    bi = hb.get("bgImage")
+    if isinstance(bi, str) and Path(bi).exists():
+        work.mkdir(parents=True, exist_ok=True); shutil.copyfile(bi, work / Path(bi).name); t["bgImage"] = Path(bi).name
+        t["bgStyle"] = "image"
+    if hb.get("layout") and hb["layout"] != "auto":                # how the speaker and the visuals share the screen
+        t["layout"] = hb["layout"]
+        if hb["layout"] == "pip": t["pip"] = hb.get("pip") or "circle"
+    if hb.get("light") == "improve":
+        t["grade"] = "auto"
     atomic_write(tp, json.dumps(t, ensure_ascii=False, indent=2))
     # local fonts → <work>/fonts + fontFile / latinFontFile (works offline)
     subprocess.run([sys.executable, str(Path(__file__).with_name("39_fonts.py")), str(work)])

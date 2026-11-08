@@ -36,7 +36,7 @@ def resolve(fam, key):
     if up and os.path.exists(up):                          # uploaded font file
         name = os.path.splitext(os.path.basename(up))[0]
         shutil.copy2(up, os.path.join(W, "fonts", os.path.basename(up)))
-        t["font" if key == "fontFile" else "latinFont"] = name
+        t[{"fontFile": "font", "latinFontFile": "latinFont", "hotFontFile": "hotFont"}[key]] = name
         t[key] = "fonts/" + os.path.basename(up)
         print(f"✅ {name} (uploaded) → {t[key]}"); return
     m = next((f for f in MAN if f["family"].lower() == fam.lower()), None)
@@ -49,4 +49,5 @@ def resolve(fam, key):
 
 resolve(t.get("font"), "fontFile")
 resolve(t.get("latinFont"), "latinFontFile")
+if t.get("hotFont"): resolve(t.get("hotFont"), "hotFontFile")   # key words in another font (dashboard «خط آخر للمهمين»)
 json.dump(t, open(tp, "w", encoding="utf-8"), ensure_ascii=False, indent=2)

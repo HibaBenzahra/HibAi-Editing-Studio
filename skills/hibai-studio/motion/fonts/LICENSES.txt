@@ -856,3 +856,6 @@ Added by HibAI (Arabic display fonts, from alfont.com — free for use and publi
 - PCB Salama — PCB (SIL OFL)
 - YR Speed — Yusuf Refaiy / AlrefaiyArt
 - Zain Rounded — algharib
+
+
+Latin fonts from Google Fonts (SIL Open Font License 1.1): Montserrat, Poppins, Space Grotesk, DM Sans, Bebas Neue, Playfair Display, Sora, Outfit, Manrope, Instrument Serif, Archivo Black.

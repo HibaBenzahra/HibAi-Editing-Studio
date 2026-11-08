@@ -1,19 +1,172 @@
 {
  "_note": "Local fonts the engine loads with @font-face (39_fonts.py copies them into the work folder). script: arabic = Arabic/Darija text, latin = Latin words, both = has both.",
  "fonts": [
-  {"family": "Cairo",               "file": "Cairo-VF.ttf",                  "script": "both",   "style": "balanced"},
-  {"family": "Tajawal",             "file": "Tajawal-Bold.ttf",              "script": "both",   "style": "clean"},
-  {"family": "IBM Plex Sans Arabic","file": "IBMPlexSansArabic-Bold.ttf",    "script": "both",   "style": "modern"},
-  {"family": "Noto Kufi Arabic",    "file": "NotoKufiArabic-VF.ttf",         "script": "arabic", "style": "geometric kufi"},
-  {"family": "Readex Pro",          "file": "ReadexPro-VF.ttf",              "script": "both",   "style": "wide modern"},
-  {"family": "Lalezar",             "file": "Lalezar-Regular.ttf",           "script": "both",   "style": "bold display"},
-  {"family": "Aref Ruqaa",          "file": "ArefRuqaa-Bold.ttf",            "script": "arabic", "style": "calligraphic"},
-  {"family": "EYEN Ammon",          "file": "EYENAmmon-Bold.ttf",            "script": "arabic", "style": "bold display",   "credit": "eyen design (alfont.com)"},
-  {"family": "Hail Elastic",        "file": "HailElastic-Light.ttf",         "script": "arabic", "style": "light elastic",  "credit": "SakkType / saifabomar (alfont.com)"},
-  {"family": "KO Mission",          "file": "KOMission-Black.otf",           "script": "arabic", "style": "heavy display",  "credit": "alfont.com"},
-  {"family": "PCB Salama",          "file": "PCBSalama-VF.ttf",              "script": "both",   "style": "soft modern",    "credit": "PCB (OFL, alfont.com)"},
-  {"family": "YR Speed",            "file": "YRSpeed-Arabic.otf",            "script": "both",   "style": "fast italic",    "credit": "Yusuf Refaiy / AlrefaiyArt (alfont.com)"},
-  {"family": "Zain Rounded",        "file": "ZainRounded-VF.ttf",            "script": "arabic", "style": "rounded friendly","credit": "algharib (alfont.com)"},
-  {"family": "Inter",               "file": "Inter-VF.ttf",                  "script": "latin",  "style": "clean sans (default Latin)"}
+  {
+   "family": "Cairo",
+   "file": "Cairo-VF.ttf",
+   "script": "both",
+   "style": "balanced"
+  },
+  {
+   "family": "Tajawal",
+   "file": "Tajawal-Bold.ttf",
+   "script": "both",
+   "style": "clean"
+  },
+  {
+   "family": "IBM Plex Sans Arabic",
+   "file": "IBMPlexSansArabic-Bold.ttf",
+   "script": "both",
+   "style": "modern"
+  },
+  {
+   "family": "Noto Kufi Arabic",
+   "file": "NotoKufiArabic-VF.ttf",
+   "script": "arabic",
+   "style": "geometric kufi"
+  },
+  {
+   "family": "Readex Pro",
+   "file": "ReadexPro-VF.ttf",
+   "script": "both",
+   "style": "wide modern"
+  },
+  {
+   "family": "Lalezar",
+   "file": "Lalezar-Regular.ttf",
+   "script": "both",
+   "style": "bold display"
+  },
+  {
+   "family": "Aref Ruqaa",
+   "file": "ArefRuqaa-Bold.ttf",
+   "script": "arabic",
+   "style": "calligraphic"
+  },
+  {
+   "family": "EYEN Ammon",
+   "file": "EYENAmmon-Bold.ttf",
+   "script": "arabic",
+   "style": "bold display",
+   "credit": "eyen design (alfont.com)"
+  },
+  {
+   "family": "Hail Elastic",
+   "file": "HailElastic-Light.ttf",
+   "script": "arabic",
+   "style": "light elastic",
+   "credit": "SakkType / saifabomar (alfont.com)"
+  },
+  {
+   "family": "KO Mission",
+   "file": "KOMission-Black.otf",
+   "script": "arabic",
+   "style": "heavy display",
+   "credit": "alfont.com"
+  },
+  {
+   "family": "PCB Salama",
+   "file": "PCBSalama-VF.ttf",
+   "script": "both",
+   "style": "soft modern",
+   "credit": "PCB (OFL, alfont.com)"
+  },
+  {
+   "family": "YR Speed",
+   "file": "YRSpeed-Arabic.otf",
+   "script": "both",
+   "style": "fast italic",
+   "credit": "Yusuf Refaiy / AlrefaiyArt (alfont.com)"
+  },
+  {
+   "family": "Zain Rounded",
+   "file": "ZainRounded-VF.ttf",
+   "script": "arabic",
+   "style": "rounded friendly",
+   "credit": "algharib (alfont.com)"
+  },
+  {
+   "family": "Inter",
+   "file": "Inter-VF.ttf",
+   "script": "latin",
+   "style": "clean sans (default Latin)"
+  },
+  {
+   "family": "Montserrat",
+   "file": "Montserrat-VF.ttf",
+   "script": "latin",
+   "style": "geometric",
+   "credit": "Google Fonts (SIL OFL)"
+  },
+  {
+   "family": "Poppins",
+   "file": "Poppins-Bold.ttf",
+   "script": "latin",
+   "style": "round bold",
+   "credit": "Google Fonts (SIL OFL)"
+  },
+  {
+   "family": "Space Grotesk",
+   "file": "SpaceGrotesk-VF.ttf",
+   "script": "latin",
+   "style": "techy",
+   "credit": "Google Fonts (SIL OFL)"
+  },
+  {
+   "family": "DM Sans",
+   "file": "DMSans-VF.ttf",
+   "script": "latin",
+   "style": "soft modern",
+   "credit": "Google Fonts (SIL OFL)"
+  },
+  {
+   "family": "Bebas Neue",
+   "file": "BebasNeue-Regular.ttf",
+   "script": "latin",
+   "style": "tall headline",
+   "credit": "Google Fonts (SIL OFL)"
+  },
+  {
+   "family": "Playfair Display",
+   "file": "PlayfairDisplay-VF.ttf",
+   "script": "latin",
+   "style": "elegant serif",
+   "credit": "Google Fonts (SIL OFL)"
+  },
+  {
+   "family": "Sora",
+   "file": "Sora-VF.ttf",
+   "script": "latin",
+   "style": "futuristic",
+   "credit": "Google Fonts (SIL OFL)"
+  },
+  {
+   "family": "Outfit",
+   "file": "Outfit-VF.ttf",
+   "script": "latin",
+   "style": "friendly geometric",
+   "credit": "Google Fonts (SIL OFL)"
+  },
+  {
+   "family": "Manrope",
+   "file": "Manrope-VF.ttf",
+   "script": "latin",
+   "style": "clean UI",
+   "credit": "Google Fonts (SIL OFL)"
+  },
+  {
+   "family": "Instrument Serif",
+   "file": "InstrumentSerif-Italic.ttf",
+   "script": "latin",
+   "style": "editorial italic",
+   "credit": "Google Fonts (SIL OFL)"
+  },
+  {
+   "family": "Archivo Black",
+   "file": "ArchivoBlack-Regular.ttf",
+   "script": "latin",
+   "style": "heavy impact",
+   "credit": "Google Fonts (SIL OFL)"
+  }
  ]
 }

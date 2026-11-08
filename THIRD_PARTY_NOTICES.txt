@@ -31,6 +31,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 -------------------------------------------------------------------------------
-Bundled fonts: see skills/hibai-studio/motion/fonts/LICENSES.txt (SIL Open Font License)
+Bundled fonts: see skills/hibai-studio/motion/fonts/LICENSES.txt (each font with its licence and credit; most are SIL Open Font License)
 three.js: see skills/hibai-studio/motion/vendor/three/LICENSE (MIT)
 Collage textures: see skills/hibai-studio/scripts/collage-assets/LICENSES.md

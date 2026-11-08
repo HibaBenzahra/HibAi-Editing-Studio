@@ -172,6 +172,57 @@ footer b{color:var(--lime);letter-spacing:1.5px}
 footer .dot{opacity:.4}
 footer a{color:var(--text);text-decoration:none;border-bottom:1px solid var(--purple)}
 footer a:hover{color:var(--lime);border-color:var(--lime)}
+/* Phase 2: background previews (rebuilt from the HibAI references, in the chosen brand colours) */
+.bgp{display:block;aspect-ratio:9/14;border-radius:12px;overflow:hidden;position:relative;margin-bottom:10px;background:var(--p-bg)}
+.bgp::before,.bgp::after{content:"";position:absolute;inset:0}
+.bg-black{background:#050505}.bg-white{background:#F7F7F5}
+.bg-gradient{background:linear-gradient(180deg,var(--p-bg),var(--p-acc))}
+.bg-blur::before{background:radial-gradient(40% 30% at 30% 40%,#c9b9a8,transparent 70%),radial-gradient(45% 35% at 70% 65%,#6d6a7a,transparent 70%),#8c8a90;filter:blur(10px);transform:scale(1.2)}
+.bg-topo{background:#050505}.bg-topo::before{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.55' stroke-width='1'%3E%3Cpath d='M-10 30 Q20 10 45 28 T100 25 T140 30'/%3E%3Cpath d='M-10 55 Q25 35 50 52 T105 50 T140 58'/%3E%3Cpath d='M-10 82 Q30 62 55 80 T110 78 T140 85'/%3E%3Cellipse cx='60' cy='104' rx='22' ry='9'/%3E%3Cellipse cx='60' cy='104' rx='11' ry='4'/%3E%3C/g%3E%3C/svg%3E") 0 0/90px 90px;animation:bgpan 14s linear infinite}
+.bg-grid{background:radial-gradient(60% 40% at 50% 45%,rgba(255,255,255,.12),transparent 70%),#151515}.bg-grid::before{background:repeating-linear-gradient(0deg,rgba(255,255,255,.12) 0 1px,transparent 1px 22px),repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 1px,transparent 1px 22px)}
+.bg-ribbon::before{background:radial-gradient(50% 18% at 50% 50%,var(--p-acc),transparent 70%);filter:blur(8px);transform:rotate(-18deg) scale(1.4);animation:bgfloat 6s ease-in-out infinite alternate}
+.bg-glow{background:linear-gradient(180deg,#070a1c 0%,var(--p-bg) 60%)}.bg-glow::before{background:radial-gradient(70% 22% at 50% 80%,var(--p-acc),transparent 70%);filter:blur(6px);animation:bgfloat 5s ease-in-out infinite alternate}
+.bg-orbit{background:linear-gradient(180deg,#040817,#0a2a5e)}.bg-orbit::before{border:1.5px solid rgba(255,255,255,.35);border-radius:50%;inset:-30% -60% 55% 20%;animation:bgspin 18s linear infinite}.bg-orbit::after{border:1.5px solid rgba(255,255,255,.3);border-radius:50%;inset:60% 25% -35% -70%;animation:bgspin 22s linear infinite reverse}
+.bg-mesh{background:#1b0b33}.bg-mesh::before{background:radial-gradient(45% 35% at 30% 25%,var(--p-acc),transparent 70%),radial-gradient(40% 35% at 75% 75%,#9b5cff,transparent 70%);filter:blur(10px);animation:bgfloat 7s ease-in-out infinite alternate}
+.bg-warp{background:#e9e9ea}.bg-warp::before{background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 20px),repeating-linear-gradient(90deg,rgba(0,0,0,.25) 0 1px,transparent 1px 20px);transform:perspective(220px) rotateX(18deg) scale(1.3);animation:bgfloat 6s ease-in-out infinite alternate}
+.bg-shapes{background:#22c55e}.bg-shapes::before{inset:30% 10% 22% 10%;border-radius:50%;background:linear-gradient(160deg,#3b82f6,#22d3ee);animation:bgfloat 5s ease-in-out infinite alternate}
+.bg-brand{background:linear-gradient(160deg,var(--p-bg) 30%,var(--p-acc))}.bg-brand::before{background:radial-gradient(40% 25% at 70% 30%,rgba(255,255,255,.35),transparent 70%);animation:bgfloat 6s ease-in-out infinite alternate}
+.bg-color{background:var(--bg-solid,#ffd23f)}.bg-image{background:#333 center/cover no-repeat}
+.bg-auto{display:grid;place-items:center;color:var(--muted);font-size:13px}
+.bgc{display:block;width:100%;aspect-ratio:9/14;border-radius:12px;margin-bottom:10px;background:#111}
+@keyframes bgpan{to{background-position:90px 90px}}@keyframes bgspin{to{transform:rotate(360deg)}}
+@keyframes bgfloat{from{transform:translateY(-6%) scale(1.15)}to{transform:translateY(6%) scale(1.25)}}
+/* layout diagrams */
+.lay{display:block;aspect-ratio:9/14;border-radius:12px;overflow:hidden;position:relative;margin-bottom:10px;background:var(--p-bg)}
+.lay .v{position:absolute;border-radius:8px;background:linear-gradient(135deg,var(--p-acc),rgba(255,255,255,.25))}
+.lay .v::after{content:"";position:absolute;left:18%;right:18%;top:38%;height:10%;border-radius:4px;background:rgba(255,255,255,.7)}
+.lay .p{position:absolute;overflow:hidden;background:#3c4252;border-radius:8px}
+.lay .p::before{content:"";position:absolute;left:50%;top:22%;width:34%;aspect-ratio:1;border-radius:50%;background:#8b93a7;transform:translateX(-50%)}
+.lay .p::after{content:"";position:absolute;left:50%;top:58%;width:78%;height:60%;border-radius:50% 50% 0 0;background:#8b93a7;transform:translateX(-50%)}
+.lay .p.cut{background:transparent}.lay .p.circle{border-radius:50%}
+/* font cards */
+.fontc .s{display:block;font-size:24px;line-height:1.45;margin-bottom:6px;color:var(--text)}
+.upl{display:inline-flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;color:var(--lime);font-weight:700;border:1px dashed rgba(142,255,1,.5);border-radius:12px;padding:10px 14px}
+/* caption preview */
+.capbig{display:block;aspect-ratio:9/12;border-radius:14px;overflow:hidden;position:relative;margin:6px 0 4px;background:radial-gradient(60% 42% at 50% 36%,rgba(255,255,255,.16),transparent 70%),linear-gradient(160deg,#3a3f4d,#1b1f29)}
+.capbig .person{position:absolute;left:50%;top:14%;width:28%;aspect-ratio:1;border-radius:50%;background:#4a5163;transform:translateX(-50%)}
+.capbig .person::after{content:"";position:absolute;left:50%;top:105%;width:190%;height:130%;border-radius:50% 50% 0 0;background:#4a5163;transform:translateX(-50%)}
+.capbig .cap{position:absolute;left:8%;right:8%;top:50%;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;direction:rtl;font:800 26px var(--p-font),Cairo;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.capbig .w{padding:2px 6px;border-radius:6px}
+.fx-card .cap{background:var(--p-bg);color:var(--p-ink);border-radius:12px;padding:8px;text-shadow:none}.fx-card .w.a{background:var(--p-acc);color:var(--p-on)}
+.fx-underline .w.a{box-shadow:inset 0 -5px 0 var(--p-acc)}.fx-bar .w.a{background:var(--p-acc);color:var(--p-on);text-shadow:none}
+.fx-color .w.hot{color:var(--p-acc)}.fx-font .w.hot{color:var(--p-acc)}.fx-font .w.hot.ar{font-family:PV_Lalezar,Cairo;font-size:1.2em;font-weight:400}
+.fx-big .w{display:none}.fx-big .w.a{display:inline;font-size:40px}
+/* motion bank */
+.mvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;max-height:520px;overflow:auto;padding:2px}
+.mv{border:1px solid var(--line);border-radius:14px;background:var(--field);overflow:hidden;position:relative}
+.mv video{display:block;width:100%;aspect-ratio:9/16;object-fit:cover;background:#000}
+.mv .nm{font-size:13px;font-weight:700;padding:6px 8px 2px}.mv .sb{font-size:11px;color:var(--muted);padding:0 8px 8px}
+.mv .acts{position:absolute;top:6px;left:6px;display:flex;gap:4px}
+.mv .acts button{width:30px;height:30px;border-radius:50%;border:none;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;font-size:14px}
+.mv.like{border-color:var(--lime)}.mv.like .acts .lk{background:var(--lime);color:var(--ground)}
+.mv.ban{opacity:.45}.mv.ban .acts .bn{background:#ef4444}
+.fxcard{padding:12px;text-align:right}.fxcard .nm{font-size:15px;padding:0}.fxcard .sb{padding:4px 0 0;font-size:12px}
 @media (max-width:520px){.swatches{grid-template-columns:1fr}.btn{padding:13px 20px}.mark small{display:none}}
 </style>
 </head>
@@ -190,6 +241,7 @@ footer a:hover{color:var(--lime);border-color:var(--lime)}
 </footer>
 <div class="toast" id="toast"></div>
 
+<script src="/motion/backgrounds.js"></script>
 <script>
 /* ═══ Options — values are the ones the editing engine reads (profile.json → theme.json) ═══ */
 const PALETTES=[
@@ -235,14 +287,48 @@ const AUDIENCES=[{v:'auto',n:'أوتوماتيك'},{v:'beginners',n:'مبتدئ�
 const VIBES=[{v:'auto',n:'أوتوماتيك',d:'حسب الهضرة'},{v:'energetic',n:'حماسي',d:'حركة بزاف، كلمات كتخبط'},
   {v:'clean',n:'نقي وتعليمي',d:'واضح ومرتب، بلا مبالغة'},{v:'luxury',n:'راقي وهادي',d:'كابشن ثابت، بلا خط تقدّم، حركة ناعمة'},
   {v:'fun',n:'ضحك ومرح',d:'ستيكرز وحركات مضحكة'}];
+const AUDIO=[{v:'clean',n:'نقّي الصوت',d:'نحيّد الضجيج والصدى ونسوّي الصوت'},{v:'keep',n:'خليه كيف هو',d:'بلا تغيير'}];
+const LIGHT=[{v:'improve',n:'حسّن الضو',d:'وجهك يبان واضح — تصحيح خفيف، بلا فيلتر'},{v:'keep',n:'خليه كيف هو',d:'بلا تغيير'}];
+const AR_FONTS=[{v:'auto',n:'أوتوماتيك',d:'نختارو حسب الفيديو'},
+  {v:'Cairo',f:'Cairo-VF.ttf',d:'متوازن'},{v:'Tajawal',f:'Tajawal-Bold.ttf',d:'نقي'},{v:'IBM Plex Sans Arabic',f:'IBMPlexSansArabic-Bold.ttf',d:'عصري'},
+  {v:'Noto Kufi Arabic',f:'NotoKufiArabic-VF.ttf',d:'كوفي'},{v:'Readex Pro',f:'ReadexPro-VF.ttf',d:'عريض'},{v:'Lalezar',f:'Lalezar-Regular.ttf',d:'للعناوين'},
+  {v:'Aref Ruqaa',f:'ArefRuqaa-Bold.ttf',d:'رقعة'},{v:'Zain Rounded',f:'ZainRounded-VF.ttf',d:'مدوّر'},{v:'PCB Salama',f:'PCBSalama-VF.ttf',d:'ناعم'},
+  {v:'EYEN Ammon',f:'EYENAmmon-Bold.ttf',d:'قوي'},{v:'KO Mission',f:'KOMission-Black.otf',d:'ثقيل'},{v:'YR Speed',f:'YRSpeed-Arabic.otf',d:'سريع'},
+  {v:'Hail Elastic',f:'HailElastic-Light.ttf',d:'خفيف'}];
+const LAT_FONTS=[{v:'Inter',f:'Inter-VF.ttf',d:'clean'},{v:'Montserrat',f:'Montserrat-VF.ttf',d:'geometric'},{v:'Poppins',f:'Poppins-Bold.ttf',d:'round bold'},{v:'Space Grotesk',f:'SpaceGrotesk-VF.ttf',d:'techy'},{v:'DM Sans',f:'DMSans-VF.ttf',d:'soft modern'},{v:'Bebas Neue',f:'BebasNeue-Regular.ttf',d:'tall headline'},{v:'Playfair Display',f:'PlayfairDisplay-VF.ttf',d:'elegant serif'},{v:'Sora',f:'Sora-VF.ttf',d:'futuristic'},{v:'Outfit',f:'Outfit-VF.ttf',d:'friendly geometric'},{v:'Manrope',f:'Manrope-VF.ttf',d:'clean UI'},{v:'Instrument Serif',f:'InstrumentSerif-Italic.ttf',d:'editorial italic'},{v:'Archivo Black',f:'ArchivoBlack-Regular.ttf',d:'heavy impact'},{v:'Readex Pro',f:'ReadexPro-VF.ttf',d:'wide'}];
+const BG_STYLES=[{v:'auto',n:'أوتوماتيك'},...((window.HBG&&HBG.list)||[])];   /* drawn live by motion/backgrounds.js — the same code the video uses */
+const LAYOUTS=[{v:'auto',n:'أوتوماتيك',d:'نختار لكل جملة'},{v:'avatar',n:'أنا طول الفيديو',d:'رسوم صغار فوقي'},{v:'split',n:'سبليت طول الوقت',d:'الرسوم فوق، أنا لتحت'},
+  {v:'alternate',n:'نتبادلو',d:'أنا ← الرسوم ← أنا'},{v:'splitmix',n:'سبليت + رسوم كاملين',d:'ومرات الرسوم بوحدها'},{v:'visuals',n:'رسوم بوحدها',d:'صوتي بلا ما نبان'},
+  {v:'pip',n:'رسوم + أنا ف إطار',d:'أنا صغيرة فوق الرسوم'},{v:'cutout',n:'أنا مقصوصة',d:'بلا خلفية، فوق الرسوم'}];
+const PIPS=[{v:'rect',n:'مستطيل'},{v:'square',n:'مربع'},{v:'circle',n:'دائرة'}];
+const CAPWORDS=[{v:'2',n:'1–2 كلمات',d:'سريع وكيشد العين'},{v:'4',n:'3–4 كلمات',d:'مريح للقراية'}];
+const CAPFX=[{v:'auto',n:'أوتوماتيك',d:'نختار حسب الفيديو'},{v:'underline',n:'خط كيتقدّم',d:'خط تحت الكلمة اللي كتقولها'},
+  {v:'bar',n:'هايلايت',d:'خلفية ملوّنة ورا الكلمة'},{v:'color',n:'لون للكلمات المهمة',d:'المهمين بلون البراند'},
+  {v:'font',n:'خط آخر للمهمين',d:'المهمين بخط ولون مختلف'},{v:'card',n:'كارط',d:'الكابشن ف كارط'},{v:'big',n:'كلمة ضخمة',d:'كلمة وحدة كبيرة'}];
+const CAPFX_STYLE={underline:'underline',bar:'bar',color:'shadow',font:'shadow',card:'card',big:'big'};
+const HFX=[['orbit','مدار','صور كيدورو حداك، اللي ورا كيدوزو موراك'],['couch_wall','حيط الفيديوهات','3 أعمدة ديال الكليبات كيطلعو موراك'],
+  ['ui_world','عالم الواجهة','نافذة شات، الكليبات كيطيرو ليها'],['frame_break','كسر الإطار','الشوت كيصغر لبوست وأنت كتبقى كبيرة'],
+  ['digital_zoom','زوم رقمي','زوم قوي مع فلاش وكلمتين كبار'],['phone_mockup','تيليفون','تيليفون كيدخل، AI كيقترح، صبع كيضغط'],
+  ['checklist','ليستة','لوحة زجاج، الخطوات كيتكتبو وكيتصحّحو'],['headline_wall','حيط العناوين','عناوين وبوستات كيتلصقو موراك'],
+  ['zoom_through_cut','زوم عبر الوجه','زوم لوجهك، الكحل، وشوت جديد'],['chart_grow','شارت كيكبر','منحنى كيطلع حداك'],
+  ['pull_back_reveal','سحبة لور','الكاميرا كترجع وكتكشف الكادر'],['green_screen','غرين سكرين','أنت قدام خلفية جديدة'],
+  ['paper_cut','ورق مقصوص','الشاشة ورقة وأنت قصاصة'],['doodle_boil','رسومات يدوية','خطوط مرسومة كتتحرك حداك'],
+  ['cover_story','كوفر مجلة','أنت على غلاف مجلة'],['glass_type','كتابة زجاجية','كلمة كبيرة من زجاج']];
 const SERVER=location.protocol.startsWith('http');
+/* font previews: every local font loaded under a preview alias */
+(function(){ const css=[...AR_FONTS,...LAT_FONTS].filter(f=>f.f).map(f=>`@font-face{font-family:"PV_${f.v.replace(/\W/g,'')}";src:url("/fonts/${f.f}");font-weight:100 900}`).join('');
+  const st=document.createElement('style'); st.textContent=css; document.head.appendChild(st); })();
+const pv=v=>'PV_'+String(v).replace(/\W/g,'');
 const tg=(k,dr,en)=>`<button type="button" class="toggle ${A[k]?'on':''}" data-tg="${k}" role="switch" aria-checked="${!!A[k]}"><span class="state">${dr}<span style="display:block;font:italic 400 15px var(--serif);color:var(--muted);direction:ltr;text-align:right">${en}</span></span><span class="switch"></span></button>`;
 
 /* ═══ Answers (same shape the engine reads) ═══ */
 const A={note:'', idMode:'auto', palette:null, custom:{bg:'#111827',ink:'#F9FAFB',acc:'#22C55E'}, url:'', logo:null, logoSaved:false,
   font:'auto', capStyle:'auto', digits:'western', pace:'auto', ctype:'auto', orientation:['9:16'], platforms:[], length:'auto',
   bgAudio:'auto', sfx:'auto', endOn:false, handle:'', cta:'', word:'',
-  goal:'auto', audience:'auto', vibe:'auto', hookAuto:true, hook:'', keywords:'', bar:true, autoRetakes:false, enSubs:false};
+  goal:'auto', audience:'auto', vibe:'auto', hookAuto:true, hook:'', keywords:'', bar:true, autoRetakes:false, enSubs:false,
+  audio:'keep', light:'keep', arFont:'auto', latFont:'Inter', fontUp:null, latUp:null, bgStyle:'auto', bgColor:'#FFD23F', bgImg:null,
+  bgBrand:true, layout:'auto', pip:'circle', capWords:'4', capFx:'auto', movesMode:'auto', movesOn:[], movesOff:[], fxOn:[]};
+let MOVES=null;   // motion bank catalog (loaded from /moves/catalog.json)
 const touched=new Set();
 
 /* ═══ Helpers ═══ */
@@ -265,7 +351,7 @@ function colors(){
 function applyPreview(){
   const c=colors()||PALETTES[0], r=document.documentElement.style;
   r.setProperty('--p-bg',c.bg); r.setProperty('--p-ink',c.ink); r.setProperty('--p-acc',c.acc); r.setProperty('--p-on',onColor(c.acc,c.ink,c.bg));
-  r.setProperty('--p-font',A.font!=='auto'?`'${A.font}'`:"'Cairo'");
+  r.setProperty('--p-font',A.arFont&&A.arFont!=='auto'?`'${pv(A.arFont)}'`:"'PV_Cairo'");
 }
 function toast(m){const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2600);}
 const choice=(list,key,cls='')=>`<div class="opts ${cls}">${list.map(o=>`<button type="button" class="opt ${A[key]===o.v?'on':''}" data-k="${key}" data-v="${esc(o.v)}"><span class="l1">${esc(o.n)}</span>${o.d?`<span class="l2">${esc(o.d)}</span>`:''}</button>`).join('')}</div>`;
@@ -280,6 +366,8 @@ const STEPS=[
    <div class="nav" style="margin-top:12px"><span></span><button type="button" class="btn ghost" id="skipAll">دوز الأسئلة ونبداو <span class="sub2">skip all</span></button></div>`},
  {id:'goal', group:'hibai', dr:'شنو الهدف ديال الفيديو؟', en:'What is the video for?', help:'باش نختار الهوك، المشاهد والجملة الأخيرة على حسابو.<i>Shapes the hook, the scenes and the closing line.</i>',
   body:()=>choice(GOALS,'goal')+`<div class="sub">شكون كيتفرج؟<i>Who is watching?</i></div>`+choice(AUDIENCES,'audience','chips')},
+ {id:'av', group:'hibai', dr:'الصوت والضو', en:'Sound & light', help:'غادي نسوّيهم قبل المونتاج.<i>Fixed before the edit starts.</i>',
+  body:()=>`<div class="sub" style="margin-top:0">الصوت<i>Audio</i></div>${choice(AUDIO,'audio')}<div class="sub">الضو ديال الفيديو<i>Lighting</i></div>${choice(LIGHT,'light')}`},
  {group:'identity', dr:'ألوان البراند ديالك', en:'Your brand colours', help:'الكروت والكتابة كاملين كياخدو هاد الألوان. الصورة ديالك ما كتبدّلش.<i>Cards and text use these colours. Your face is never recoloured.</i>',
   body:()=>`<div class="tabs">${[['palette','ألوان واجدة'],['custom','نختارها براسي'],['url','من السيت ولا الحساب ديالي']].map(([m,n])=>`<button type="button" class="tab ${A.idMode===m||(A.idMode==='auto'&&m==='palette')?'on':''}" data-tab="${m}">${n}</button>`).join('')}</div>
    ${A.idMode==='custom'?`<div class="swatches">${[['bg','الخلفية'],['ink','الكتابة'],['acc','الكلمة المهمة']].map(([k,n])=>`<label class="sw"><input type="color" data-c="${k}" value="${A.custom[k].toLowerCase()}"><span>${n}</span></label>`).join('')}</div>
@@ -290,10 +378,25 @@ const STEPS=[
  {group:'identity', dr:'زيد اللوغو ولا شي صورة', en:'Add your logo or an image', help:'PNG بلا خلفية كيجي أحسن. اختياري.<i>A PNG with no background looks best. Optional.</i>',
   body:()=>{const src=A.logo?A.logo.data:(A.logoSaved?'/api/logo':''); return `<label class="drop" id="drop"><input type="file" id="logoIn" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
    ${src?`<img src="${src}" alt="">`:`<span class="plus">+</span>`}<span style="font-weight:700">${src?'بدّل الصورة':'ضغط ولا جرّ الصورة هنا'}</span><span style="color:var(--muted);font-family:var(--serif);font-style:italic;direction:ltr">${src?'Change image':'Click or drop an image here'}</span></label>`;}},
- {group:'font', dr:'الخط', en:'Font', help:'كاملين كيدعمو العربية. ختار اللي كيشبه ليك.<i>All support Arabic. Pick the one that feels like you.</i>',
-  body:()=>`<div class="opts wide">${FONTS.map(f=>`<button type="button" class="opt fontc ${A.font===f.v?'on':''}" data-k="font" data-v="${esc(f.v)}">${f.v==='auto'?'':`<span class="s" style="font-family:'${f.v}';font-weight:${f.v==='Lalezar'?400:700}">${FONT_SAMPLE}</span>`}<span class="l1">${esc(f.n)}</span><span class="l2">${esc(f.d)}</span></button>`).join('')}</div>`},
- {group:'capStyle', dr:'شكل الكابشن', en:'Caption style', help:'الكلمة كتتلوّن فاللحظة اللي كتقولها — بالألوان والخط اللي ختاريتي.<i>The word lights up as you say it, in your colours and font.</i>',
-  body:()=>`<div class="opts">${CAPS.map(c=>`<button type="button" class="opt ${A.capStyle===c.v?'on':''} cap-${c.v}" data-k="capStyle" data-v="${c.v}"><span class="phone"><span class="person"></span><span class="cap">${c.v==='auto'?'✨':capWords()}</span></span><span class="l1">${c.n}</span><span class="l2">${c.d}</span></button>`).join('')}</div>`},
+ {group:'font', dr:'الخطوط', en:'Fonts', help:'خط للدارجة والعربية، وخط للكلمات بالحروف اللاتينية (Claude, AI…). ولا زيد الخط ديالك.<i>One font for Arabic/Darija, one for Latin words — or upload your own.</i>',
+  body:()=>`<div class="sub" style="margin-top:0">الخط العربي<i>Arabic / Darija</i></div>
+   <div class="opts wide">${AR_FONTS.map(f=>`<button type="button" class="opt fontc ${A.arFont===f.v&&!A.fontUp?'on':''}" data-k="arFont" data-v="${esc(f.v)}">${f.f?`<span class="s" style="font-family:'${pv(f.v)}',Cairo">خلّي الفيديو يهضر عليك</span>`:''}<span class="l1">${esc(f.n||f.v)}</span><span class="l2">${esc(f.d||'')}</span></button>`).join('')}</div>
+   <label class="upl"><input type="file" id="fontIn" accept=".ttf,.otf" hidden>${A.fontUp?'✓ '+esc(A.fontUp.name)+' · بدّل':'+ زيد الخط ديالك (.ttf / .otf)'}</label>
+   <div class="sub">الخط اللاتيني<i>Latin words</i></div>
+   <div class="opts">${LAT_FONTS.map(f=>`<button type="button" class="opt fontc ${A.latFont===f.v&&!A.latUp?'on':''}" data-k="latFont" data-v="${esc(f.v)}"><span class="s" style="font-family:'${pv(f.v)}';direction:ltr">Claude · ChatGPT 2026</span><span class="l1">${esc(f.v)}</span><span class="l2">${esc(f.d)}</span></button>`).join('')}</div>
+   <label class="upl"><input type="file" id="latIn" accept=".ttf,.otf" hidden>${A.latUp?'✓ '+esc(A.latUp.name)+' · change':'+ Upload your own Latin font (.ttf / .otf)'}</label>`},
+ {id:'bgs', group:'hibai', dr:'الخلفية', en:'Background', help:'كتبان ملي كنكون ف السبليت ولا الرسوم بوحدها — بالألوان ديال البراند.<i>Shown behind split screens and full-screen visuals, in your brand colours.</i>',
+  body:()=>`<button type="button" class="toggle ${A.bgBrand?'on':''}" data-tg="bgBrand" role="switch"><span class="state">${A.bgBrand?'بالألوان ديال البراند ديالي · In my brand colours':'الشكل الأصلي · Original look'}<span style="display:block;font:italic 400 15px var(--serif);color:var(--muted);direction:ltr;text-align:right">${A.bgBrand?'Gradients, lines and glows follow your colours':'Each background keeps its own colours'}</span></span><span class="switch"></span></button>
+   <div class="opts" style="margin-top:14px">${BG_STYLES.map(b=>`<button type="button" class="opt ${A.bgStyle===b.v?'on':''}" data-k="bgStyle" data-v="${b.v}">${b.v==='auto'?`<span class="bgp bg-auto">✨</span>`:`<canvas class="bgc" data-bgs="${b.v}"></canvas>`}<span class="l1">${b.n}</span></button>`).join('')}</div>
+   ${A.bgStyle==='color'?`<div class="stack"><label class="sw" style="max-width:220px"><input type="color" id="bgColor" value="${A.bgColor.toLowerCase()}"><span>اللون</span></label></div>`:''}
+   ${A.bgStyle==='image'?`<label class="upl"><input type="file" id="bgIn" accept="image/png,image/jpeg,image/webp" hidden>${A.bgImg?'✓ '+esc(A.bgImg.name)+' · بدّل':'+ زيد صورة الخلفية'}</label>`:''}`},
+ {id:'layout', group:'hibai', dr:'أنت والرسوم', en:'You & the visuals', help:'الرسوم = موشن، لوغوات، أيقونات، سكرين شوتات، فيديوهات.<i>Visuals = motion graphics, logos, icons, screenshots, clips.</i>',
+  body:()=>`<div class="opts">${LAYOUTS.map(l=>`<button type="button" class="opt ${A.layout===l.v?'on':''}" data-k="layout" data-v="${l.v}">${layDiagram(l.v)}<span class="l1">${l.n}</span><span class="l2">${l.d}</span></button>`).join('')}</div>
+   ${A.layout==='pip'?`<div class="sub">شكل الإطار<i>Frame shape</i></div>${choice(PIPS,'pip','chips')}`:''}`},
+ {id:'caps', group:'capStyle', dr:'الكابشن', en:'Captions', help:'كيفاش كتبان الكتابة ديال الهضرة — المعاينة بالألوان والخط ديالك.<i>How your words appear — previewed in your colours and font.</i>',
+  body:()=>`<span class="capbig fx-${A.capFx==='auto'?'card':A.capFx}" id="capPrev"><span class="person"></span><span class="cap" id="capWords"></span></span>
+   <div class="sub">شحال من كلمة ف المرة<i>Words at a time</i></div>${choice(CAPWORDS,'capWords')}
+   <div class="sub">الستايل<i>Style</i></div>${choice(CAPFX,'capFx')}`},
  {id:'vibe', group:'hibai', dr:'الفيب ديال الفيديو', en:'The vibe', help:'كيبدّل الحركة ديال الكابشن والمشاهد.<i>Changes how captions and scenes move.</i>',
   body:()=>choice(VIBES,'vibe')},
  {group:'digits', dr:'الأرقام', en:'Numbers', help:'فالكابشن والرسومات.<i>In captions and graphics.</i>',
@@ -306,6 +409,12 @@ const STEPS=[
   body:()=>`<button type="button" class="toggle ${A.hookAuto?'on':''}" id="hookTg" role="switch" aria-checked="${A.hookAuto}"><span class="state">${A.hookAuto?'كتبو أنت ليا (3 اقتراحات) · Write it for me':'عندي الهوك ديالي · I have my own'}</span><span class="switch"></span></button>
    ${A.hookAuto?'':`<div class="stack"><label><small>الهوك ديالك</small><input type="text" id="hook" maxlength="60" value="${esc(A.hook)}" placeholder="3 codes f ChatGPT خاصك تعرفهم"></label></div>`}
    <div class="stack"><label><small>كلمات بغيتيهم يبانو بلون مختلف (فرّق بفاصلة) · Words to highlight</small><input type="text" id="keywords" value="${esc(A.keywords)}" placeholder="ChatGPT, AI, مجاني"></label></div>`},
+ {id:'moves', group:'moves', dr:'بنك الحركات', en:'Motion bank', help:'+100 حركة و16 effect ديال HibAI. خليه عليا، ولا ختار اللي عجبوك ♥ واللي ما بغيتيهمش ✕.<i>100+ motions and 16 HibAI effects. Leave it to me, or like ♥ / ban ✕.</i>',
+  body:()=>`<button type="button" class="toggle ${A.movesMode==='pick'?'on':''}" id="movesTg" role="switch"><span class="state">${A.movesMode==='pick'?'غادي نختار براسي · I\'ll pick':'ختار أنت حسب الفيديو · Choose for me'}</span><span class="switch"></span></button>
+   ${A.movesMode!=='pick'?'':`<div class="sub">16 effect ديال HibAI<i>HibAI effects</i></div>
+   <div class="mvgrid" style="max-height:none">${HFX.map(([k,n,d])=>`<div class="mv ${A.fxOn.includes(k)?'like':''}" data-fx="${k}"><video muted loop playsinline preload="none" poster="/moves/hibai-fx/${k}.jpg" src="/moves/hibai-fx/${k}.mp4"></video><div class="acts"><button type="button" class="lk">♥</button></div><div class="nm">${n}</div><div class="sb">${d}</div></div>`).join('')}</div>
+   <div class="sub">بنك الحركات (+100)<i>Motion bank — hover to play</i></div>
+   <div class="mvgrid" id="mvgrid">${MOVES?MOVES.map(m=>`<div class="mv ${A.movesOn.includes(m.id)?'like':''} ${A.movesOff.includes(m.id)?'ban':''}" data-mv="${m.id}"><video muted loop playsinline preload="none" poster="/moves/${m.preview.replace('previews/','posters/').replace('.mp4','.jpg')}" src="/moves/${m.preview}"></video><div class="acts"><button type="button" class="lk" data-like="${m.id}">♥</button><button type="button" class="bn" data-ban="${m.id}">✕</button></div><div class="nm">${esc(m.name)}</div><div class="sb">${esc(m.sub||'')}</div></div>`).join(''):'<p class="help">كنحمّل البنك…</p>'}</div>`}`},
  {group:'platforms', dr:'فين غادي تنشر؟', en:'Where will you post?', help:'باش نبعّد الكتابة على البوطونات ديال كل بلاصة.<i>So text stays clear of each app\'s buttons.</i>',
   body:()=>multi(PLATS,'platforms','chips')+`<div class="sub">طول الفيديو<i>Length</i></div>`+choice(LENS,'length','chips')},
  {id:'extras', group:'hibai', dr:'لمسات HibAI', en:'HibAI touches', help:'',
@@ -324,6 +433,31 @@ const STEPS=[
 ];
 let step=-1;   // -1 welcome · 0..n-1 steps · n summary · n+1 done
 
+function layDiagram(v){ const P=(st,c='')=>`<span class="p ${c}" style="${st}"></span>`, V=st=>`<span class="v" style="${st}"></span>`;
+  const m={auto:`<span class="bgp bg-auto" style="margin:0;height:100%">✨</span>`,
+    avatar:P('inset:0;border-radius:0')+V('left:12%;right:12%;top:8%;height:18%'),
+    split:V('left:8%;right:8%;top:6%;height:40%')+P('left:14%;right:14%;top:52%;bottom:4%'),
+    alternate:P('left:4%;top:4%;width:44%;bottom:4%')+V('right:4%;top:4%;width:44%;bottom:4%'),
+    splitmix:V('left:8%;right:8%;top:6%;height:40%')+P('left:14%;right:14%;top:52%;bottom:4%')+V('right:6%;bottom:6%;width:26%;height:14%;opacity:.8'),
+    visuals:V('left:8%;right:8%;top:10%;bottom:10%'),
+    pip:V('left:6%;right:6%;top:6%;bottom:6%')+P('right:10%;bottom:10%;width:34%;aspect-ratio:'+(A.pip==='rect'?'3/4':'1'),A.pip==='circle'?'circle':''),
+    cutout:V('left:6%;right:6%;top:6%;bottom:6%')+P('left:20%;right:20%;top:34%;bottom:0','cut')};
+  return `<span class="lay">${m[v]||''}</span>`; }
+let bgRaf=null, bgImgEl=null;
+function bgLoop(){ cancelAnimationFrame(bgRaf); const cv=[...document.querySelectorAll('.bgc')]; if(!cv.length||!window.HBG) return;
+  if(A.bgImg&&(!bgImgEl||bgImgEl._src!==A.bgImg.data)){ bgImgEl=new Image(); bgImgEl.src=A.bgImg.data; bgImgEl._src=A.bgImg.data; }
+  cv.forEach(c=>{ const r=c.getBoundingClientRect(), d=Math.min(2,window.devicePixelRatio||1); c.width=Math.round(r.width*d); c.height=Math.round(r.height*d); });
+  let last=0; const t0=performance.now();
+  const tick=now=>{ bgRaf=requestAnimationFrame(tick); if(now-last<66) return; last=now; const t=(now-t0)/1000, pal=colors()||PALETTES[0];
+    cv.forEach(c=>{ if(!c.isConnected) return; HBG.draw(c.getContext('2d'),c.dataset.bgs,t,c.width,c.height,{brand:A.bgBrand,pal,color:A.bgColor,img:bgImgEl}); }); };
+  bgRaf=requestAnimationFrame(tick); }
+let capTimer=null;
+function capPreview(){ clearInterval(capTimer); const box=$('#capWords'); if(!box) return;
+  const words=['هاد','Claude','كيمونطي','الفيديو','ديالك','بوحدو'], hot=new Set([1,3]), n=A.capFx==='big'?1:+A.capWords; let i=0;
+  const lat=w=>/[A-Za-z]/.test(w), lf=`'${pv(A.latFont)}',Inter`;
+  const tick=()=>{ const start=Math.floor(i/n)*n%words.length, chunk=words.slice(start,start+n), act=i%n;
+    box.innerHTML=chunk.map((w,j)=>`<span class="w${j===act?' a':''}${hot.has(start+j)?' hot':''}${lat(w)?'':' ar'}" style="${lat(w)?`font-family:${lf};direction:ltr;font-weight:800`:''}">${w}</span>`).join(''); i=(i+1)%words.length; };
+  tick(); capTimer=setInterval(tick,520); }
 /* ═══ Render ═══ */
 function chrome(){
   const n=STEPS.length;
@@ -361,7 +495,7 @@ function wire(s){
   $('#back').onclick=()=>{ commitText(); go(-1); };
   $$('[data-k]').forEach(b=>b.onclick=()=>{
     A[b.dataset.k]=b.dataset.v; mark(s.group);
-    if(b.dataset.k==='font') return render();
+    if(['font','arFont','latFont','layout','bgStyle','capFx','capWords','pip'].includes(b.dataset.k)){ if(b.dataset.k==='arFont') A.fontUp=null; if(b.dataset.k==='latFont') A.latUp=null; return render(); }
     $$(`[data-k="${b.dataset.k}"]`).forEach(x=>x.classList.toggle('on',x===b)); applyPreview();
   });
   $$('[data-m]').forEach(b=>b.onclick=()=>{
@@ -382,6 +516,18 @@ function wire(s){
   const ht=$('#hookTg'); if(ht) ht.onclick=()=>{ commitText(); A.hookAuto=!A.hookAuto; mark('hibai'); render(); };
   $$('[data-tg]').forEach(b=>b.onclick=()=>{ A[b.dataset.tg]=!A[b.dataset.tg]; mark('hibai'); render(); });
   const sa=$('#skipAll'); if(sa) sa.onclick=()=>{ commitText(); send({version:1,skip:true,note:A.note}); };
+  const up=(id,max,cb)=>{ const el=$(id); if(!el) return; el.onchange=()=>{ const f=el.files[0]; if(!f) return; if(f.size>max){ toast('الملف كبير بزاف'); return; }
+    const rd=new FileReader(); rd.onload=()=>{ cb({name:f.name,data:rd.result}); mark(s.group); render(); }; rd.readAsDataURL(f); }; };
+  up('#fontIn',8*1024*1024,v=>{A.fontUp=v;}); up('#latIn',8*1024*1024,v=>{A.latUp=v;}); up('#bgIn',8*1024*1024,v=>{A.bgImg=v;});
+  const bc=$('#bgColor'); if(bc) bc.addEventListener('input',()=>{ A.bgColor=bc.value; mark('hibai'); $$('.bg-color').forEach(e=>e.style.setProperty('--bg-solid',bc.value)); });
+  const mt=$('#movesTg'); if(mt) mt.onclick=()=>{ A.movesMode=A.movesMode==='pick'?'auto':'pick'; mark('moves'); render();
+    if(A.movesMode==='pick'&&!MOVES&&SERVER) fetch('/moves/catalog.json').then(r=>r.json()).then(d=>{ MOVES=(d.moves||d).filter(m=>m.preview); render(); }).catch(()=>toast('ما قدرتش نحمّل البنك')); };
+  $$('[data-fx]').forEach(c=>c.onclick=()=>{ const k=c.dataset.fx, i=A.fxOn.indexOf(k); if(i>=0) A.fxOn.splice(i,1); else A.fxOn.push(k); c.classList.toggle('like',i<0); mark('moves'); });
+  $$('[data-like],[data-ban]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const id=b.dataset.like||b.dataset.ban, on=!!b.dataset.like;
+    const [mine,other]=on?[A.movesOn,A.movesOff]:[A.movesOff,A.movesOn]; const i=mine.indexOf(id); if(i>=0) mine.splice(i,1); else { mine.push(id); const j=other.indexOf(id); if(j>=0) other.splice(j,1); }
+    const card=b.closest('.mv'); card.classList.toggle('like',A.movesOn.includes(id)); card.classList.toggle('ban',A.movesOff.includes(id)); mark('moves'); });
+  $$('.mv video').forEach(v=>{ const c=v.closest('.mv'); c.onmouseenter=()=>v.play().catch(()=>0); c.onmouseleave=()=>v.pause(); });
+  capPreview(); bgLoop();
   const first=$('#card textarea, #card input[type=text], #card input[type=url]'); if(first) first.focus({preventScroll:true});
 }
 function commitText(){
@@ -403,14 +549,17 @@ function collect(){
   else if(A.idMode==='url'&&A.url) identity={mode:'url',url:A.url};
   if(A.logo) identity.logo=A.logo;
   return {version:1, skip:false, note:A.note.trim(), identity,
-    font:A.font, capStyle:A.capStyle, digits:A.digits, pace:A.pace,
+    font:A.arFont, capStyle:CAPFX_STYLE[A.capFx]||'auto', digits:A.digits, pace:A.pace,
+    moves:{mode:A.movesMode, on:A.movesOn, off:A.movesOff},
     content:{type:A.ctype,person:'with'},
     orientation:['9:16'], platforms:A.platforms, length:A.length,
     voice:{mode:'own', lang:null, gender:null, tts:null},
     bgAudio:A.bgAudio, sfx:A.sfx,
     endCard:{on:A.endOn, handle:A.handle, cta:A.cta, word:A.word},
     hibai:{goal:A.goal, audience:A.audience, vibe:A.vibe, hook:A.hookAuto?'':A.hook, hookAuto:A.hookAuto,
-      keywords:A.keywords.split(/[,،]/).map(s=>s.trim()).filter(Boolean), bar:A.bar, autoRetakes:A.autoRetakes, enSubs:A.enSubs},
+      keywords:A.keywords.split(/[,،]/).map(s=>s.trim()).filter(Boolean), bar:A.bar, autoRetakes:A.autoRetakes, enSubs:A.enSubs,
+      audio:A.audio, light:A.light, latinFont:A.latFont, fontUpload:A.fontUp||undefined, latinFontUpload:A.latUp||undefined, bg:{style:A.bgStyle, color:A.bgColor, brand:A.bgBrand}, bgImage:A.bgImg||undefined,
+      layout:A.layout, pip:A.pip, capWords:+A.capWords, capFx:A.capFx, effects:A.fxOn},
     answered:[...touched]};
 }
 const nameOf=(list,v)=>{const o=list.find(x=>x.v===v); return o?o.n:v;};
@@ -422,7 +571,11 @@ function summary(){
     ['الهدف',`${nameOf(GOALS,A.goal)} · ${nameOf(AUDIENCES,A.audience)}`,'شنو الهدف ديال الفيديو؟'],
     ['الألوان',A.idMode==='url'?esc(A.url||'—'):c?`${['bg','ink','acc'].map(k=>`<i style="background:${c[k]}"></i>`).join('')} ${A.idMode==='palette'&&pal?pal.n:'ديالي'}`:'أوتوماتيك','ألوان البراند ديالك'],
     ['اللوغو',A.logo?esc(A.logo.name):(A.logoSaved?'✓':'—'),'زيد اللوغو ولا شي صورة'],
-    ['الخط',nameOf(FONTS,A.font),'الخط'],['الكابشن',nameOf(CAPS,A.capStyle),'شكل الكابشن'],['الفيب',nameOf(VIBES,A.vibe),'الفيب ديال الفيديو'],
+    ['الصوت والضو',`${nameOf(AUDIO,A.audio)} · ${nameOf(LIGHT,A.light)}`,'الصوت والضو'],
+    ['الخطوط',`${A.fontUp?esc(A.fontUp.name):esc(A.arFont)} · ${A.latUp?esc(A.latUp.name):esc(A.latFont)}`,'الخطوط'],['الخلفية',nameOf(BG_STYLES,A.bgStyle),'الخلفية'],
+    ['أنت والرسوم',nameOf(LAYOUTS,A.layout)+(A.layout==='pip'?' · '+nameOf(PIPS,A.pip):''),'أنت والرسوم'],
+    ['الكابشن',`${nameOf(CAPWORDS,A.capWords)} · ${nameOf(CAPFX,A.capFx)}`,'الكابشن'],['الفيب',nameOf(VIBES,A.vibe),'الفيب ديال الفيديو'],
+    ['بنك الحركات',A.movesMode==='pick'?`♥ ${A.movesOn.length+A.fxOn.length} · ✕ ${A.movesOff.length}`:'Claude يختار','بنك الحركات'],
     ['الأرقام',A.digits==='arabic'?'مشرقية':'عادية','الأرقام'],['الإيقاع',nameOf(PACES,A.pace),'الإيقاع'],['نوع الفيديو',nameOf(CTYPES,A.ctype),'نوع الفيديو'],
     ['الهوك',A.hookAuto?'Claude يقترح 3':esc(A.hook||'—'),'الهوك والكلمات المهمة'],
     ['فين غادي تنشر',A.platforms.map(v=>nameOf(PLATS,v)).join(' · ')||'—','فين غادي تنشر؟'],
@@ -481,6 +634,10 @@ async function prefill(){
   ['bar','autoRetakes','enSubs','hookAuto'].forEach(k=>{ if(typeof hb[k]==='boolean') A[k]=hb[k]; });
   if(hb.hook) A.hook=hb.hook;
   if(Array.isArray(hb.keywords)) A.keywords=hb.keywords.join(', ');
+  ['audio','light','latFont','layout','pip','capFx'].forEach(k=>{ const v=hb[k==='latFont'?'latinFont':k]; if(v) A[k]=v; });
+  if(hb.capWords) A.capWords=String(hb.capWords); if(hb.bg){ A.bgStyle=hb.bg.style||A.bgStyle; A.bgColor=hb.bg.color||A.bgColor; if(typeof hb.bg.brand==='boolean') A.bgBrand=hb.bg.brand; }
+  if(p.font) A.arFont=p.font; if(Array.isArray(hb.effects)) A.fxOn=[...hb.effects];
+  if(p.moves){ A.movesMode=p.moves.mode||A.movesMode; A.movesOn=[...(p.moves.on||[])]; A.movesOff=[...(p.moves.off||[])]; }
   (p.answered||[]).forEach(g=>touched.add(g));
   toast('حليت الإعدادات اللي سجّلتي قبل — بدّل اللي بغيتي');
 }
