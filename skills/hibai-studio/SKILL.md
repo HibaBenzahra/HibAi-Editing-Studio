@@ -25,6 +25,10 @@ description: 'HibAI Studio by Hiba (@hibssssi) — edits a talking-to-camera vid
 ### A) The flow: 3 approvals, then the video
 Never jump to the final render. Every edit goes through these gates, in this order:
 
+0. **Every new video starts with the HibAI dashboard** (`references/start.md` step 0.5) — a returning user reuses their saved
+   settings in one click («use my saved settings»), and at the end anyone can tick «save these choices for my next videos».
+   Don't open it again for edits of the same video, or when the user says «same settings» / «no dashboard».
+
 1. **Before editing — 2 questions** (skip a question only if the dashboard already answered it, `profile.json` ← `hibai.audio` / `hibai.light`):
    - **Audio:** «Clean the sound (remove noise/echo, even it out) or keep it as it is?» → clean = `references/audio-enhance.md`
      (`bash scripts/02b_enhance_audio.sh <work> --local`), keep = don't touch.
@@ -47,6 +51,13 @@ Never jump to the final render. Every edit goes through these gates, in this ord
   (don't make it big; 0.7 for busy shots).
 - **Latin words in a Latin font, Darija/Arabic in the Arabic font** — automatic (`latinFont`, default Inter). Fonts are local:
   `python scripts/39_fonts.py <work>` (the theme step runs it); `39_fonts.py list` shows them. An uploaded .ttf/.otf works too.
+
+- **Written hook** (`theme.json` ← `hook`): follows `capWords` too (1–2 words at a time), no dark band behind it, never on the
+  face (above the head when there's room, else under the jaw). `hook.icon: "logo-claude.svg"` (a file in `assets/`) = the brand's
+  logo pops just under the words, then flies up into the empty space above the head.
+- **Framing:** full-screen shots zoom in gently by themselves (`fullZoom: "auto"`, ≤1.3×) so there's no big empty space above the
+  head — head top ≈ 330 px. Needs `38_jaw.py`. `fullZoom: 1` turns it off. Captions, hook and motions follow the new framing.
+- **Every visual stays on screen ≥ 1.5–2 s** (one sentence at least) — a moment that flashes by is a wasted visual.
 
 ### C) Don't repeat — show
 If a word is in the caption at that moment, the motion must **not** write the same word again: show it — an icon, a logo,

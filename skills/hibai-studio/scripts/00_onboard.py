@@ -123,11 +123,15 @@ def atomic_write(path, text):
     os.replace(tmp, path)
 
 
-def clean(obj):
-    """ينظّف الإرسال: يحفظ الشعار ملفاً، ويتأكد من الألوان والقيم."""
+def clean(obj, work=None):
+    """ينظّف الإرسال: يحفظ الشعار ملفاً، ويتأكد من الألوان والقيم.
+    HibAI: remember=false ('only for this video') → uploads go to <work>/hibai-uploads, the saved profile stays untouched."""
     if not isinstance(obj, dict):
         raise ValueError("المدخل مو كائن JSON")
     obj = dict(obj)
+    obj["remember"] = obj.get("remember", True) is not False
+    obj.pop("reused", None)                      # only for the page's «done» message
+    store = HOME if (obj["remember"] or not work) else Path(work) / "hibai-uploads"
     obj.setdefault("version", 1)
     obj["savedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     if obj.get("skip"):
@@ -156,10 +160,10 @@ def clean(obj):
         raw = base64.b64decode(b64)
         if len(raw) > 8 * 1024 * 1024:
             raise ValueError("الشعار كبير")
-        HOME.mkdir(parents=True, exist_ok=True)
-        for old in HOME.glob("logo.*"):
+        store.mkdir(parents=True, exist_ok=True)
+        for old in store.glob("logo.*"):
             old.unlink()
-        dst = HOME / ("logo" + ext)
+        dst = store / ("logo" + ext)
         dst.write_bytes(raw)
         idn["logo"] = str(dst)
     elif lg is not None and not isinstance(lg, str):
@@ -188,10 +192,10 @@ def clean(obj):
                 raw = base64.b64decode(b64)
                 if len(raw) > 8 * 1024 * 1024:
                     raise ValueError("الملف كبير")
-                HOME.mkdir(parents=True, exist_ok=True)
-                for old in HOME.glob(stem + ".*"):
+                store.mkdir(parents=True, exist_ok=True)
+                for old in store.glob(stem + ".*"):
                     old.unlink()
-                dst = HOME / (stem + ext)
+                dst = store / (stem + ext)
                 dst.write_bytes(raw)
                 hb[key] = str(dst)
             elif v is not None and not isinstance(v, str):
@@ -213,8 +217,10 @@ def save(obj, work):
     if "moves" in old and "moves" not in obj:      # اختيار معرض الحركات (35_moves.py) ما ينمسح لو عاد صفحة التعارف
         obj["moves"] = old["moves"]
     text = json.dumps(obj, ensure_ascii=False, indent=2)
-    atomic_write(PROFILE, text)
-    paths = [str(PROFILE)]
+    paths = []
+    if obj.get("remember", True) or obj.get("skip") or not work:   # «save for my next videos» (default) → the saved profile
+        atomic_write(PROFILE, text)
+        paths.append(str(PROFILE))
     if work:
         wp = Path(work) / "profile.json"
         atomic_write(wp, text)
@@ -351,7 +357,7 @@ class Handler(BaseHTTPRequestHandler):
             n = int(self.headers.get("Content-Length") or 0)
             if n > 12 * 1024 * 1024:
                 raise ValueError("الإرسال كبير")
-            obj = clean(json.loads(self.rfile.read(n).decode("utf-8")))
+            obj = clean(json.loads(self.rfile.read(n).decode("utf-8")), self.server.work)
             paths = save(obj, self.server.work)
         except Exception as e:
             log("⚠️ ما انحفظ:", e)
@@ -448,7 +454,12 @@ def to_theme(args):
         return 1
     work = Path(args[0])
     force = "--force" in args
-    p = load_profile()
+    p = None
+    wp = work / "profile.json"                    # this video's dashboard answers win (they may be «only for this video»)
+    if wp.exists():
+        try: p = json.loads(wp.read_text(encoding="utf-8"))
+        except Exception: p = None
+    p = p or load_profile()
     if not p or p.get("skip"):
         log("ما فيه اختيارات محفوظة (أو تخطّى) — اسأل عن الألوان سؤالاً واحداً بدلها.")
         return 3

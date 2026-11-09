@@ -10,11 +10,13 @@
        "style": "bold",     ← bold (نص ضخم — فوق الفيديو: أبيض على ظل غامق · فوق الورقة: بلون الحبر بلا ظل) · card (كرت بألوان الثيم)
        "kicker": "",        ← سطر صغير فوق (اسم البرنامج/الضيف) — اختياري
        "em": ["10 دقايق"],  ← الكلمات اللي تاخذ لون التمييز (افتراضاً: الرقم وكلمته · أو *كلمة* بالنص)
+       "icon": "logo-claude.svg",  ← HibAI: a logo/icon (file in <work>/assets/) that pops above the hook — the brand the hook names
        "keepCaps": false }  ← الكابشن (والسؤال الكبير وكولاج الكلام) يختفي وقت الهوك — نصّان مع بعض = المشاهد ما يقرا ولا واحد
    الألوان كلها من الثيم (acc للتمييز) — وإن نقص الثيم: ألوان المحرّك نفسه، وإلا أبيض/أسود محايد. لا لون هوية ثابت هني.   */
 (function(){
   if(window.HookCard&&window.HookCard.loaded) return;               /* مركّب مرتين (compose.html + المحرّك)؟ مرة وحدة تكفي */
   const CV=document.getElementById('cv'), CX=CV.getContext('2d'), W=1080, H=1920;
+  let CUR=null;   /* the hook chunk on screen now (1–2 words) */
   let CFG=null, FB='', FONTF='Cairo', ACCC='#FFFFFF', BGC='#FFFFFF', INKC='#111111';
   const cl=(v,a,b)=>Math.max(a,Math.min(b,v)), pr=(t,a,b)=>cl((t-a)/(b-a),0,1), eo=k=>1-Math.pow(1-k,3);
   const hx=h=>{h=String(h).replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16));};
@@ -43,6 +45,12 @@
     CFG={text, n, from:+hook.from||0, dur:+hook.dur||cl(0.9+0.28*n,1.6,3.0), pos:hook.pos||'auto', style:hook.style||'bold',
          kicker:hook.kicker?toWestern(hook.kicker):'', em:hook.em||null, keepCaps:!!hook.keepCaps,
          surface:hook.surface||null, pad:(typeof hook.pad==='number')?hook.pad:null};
+    /* HibAI: «1–2 words at a time» (theme capWords) applies to the written hook too — it shows in chunks, one after the other */
+    const cw=(typeof CAP_WORDS!=='undefined'&&CAP_WORDS)||+TH.capWords||0;
+    if(cw>0&&n>cw){ const per=cw<=2?2:4, ws=words(text.replace(/\s*\|\s*/g,' ')); CFG.chunks=[];
+      for(let i=0;i<ws.length;i+=per) CFG.chunks.push(ws.slice(i,i+per).join(' '));
+      CFG.dur=Math.max(CFG.dur,CFG.chunks.length*1.0); }
+    if(hook.icon){ const im=new Image(); im.src='assets/'+hook.icon; CFG.icon=im; }
   }
   const active=t=>!!CFG&&t>=CFG.from&&t<CFG.from+CFG.dur;
   const hideCap=t=>active(t)&&!CFG.keepCaps&&t<CFG.from+CFG.dur-0.2;   /* الكابشن يرجع مع طلعة الهوك — بلا فراغ بينهما */
@@ -56,7 +64,7 @@
 
   /* الأسطر: «…»/«|» تكسر السطر (الفكرة ثم اللفّة) */
   function tokens(){
-    const raw=CFG.text; const parts=raw.split(/\s*\|\s*|(?<=…)\s*/).filter(p=>p.trim());
+    const raw=CUR||CFG.text; const parts=raw.split(/\s*\|\s*|(?<=…)\s*/).filter(p=>p.trim());
     const emList=Array.isArray(CFG.em)?CFG.em.map(toWestern):null;
     const marked=/\*[^*]+\*/.test(raw), strip=x=>x.replace(/[…؟?!.,،]/g,'');
     return parts.map(p=>{ const ws=words(p); const out=[]; let inStar=false;
@@ -104,6 +112,10 @@
        الكاميرات     : FULL/QUOTE → عند الصدر (الوجه عند 42٪ = y≈806) · SPLIT → على الفاصل بين الكاميرتين (y≈975، مكان كابشنها)
                        HEAD → فوق على الورقة (مكان كولاج الكلام، فوق راسه)                                                */
   const TOP=bh=>cl(470,230+bh/2,1480-bh/2), MID=bh=>cl(900,230+bh/2,1480-bh/2), LOW=bh=>cl(Math.max(1180,1000+bh/2),230+bh/2,1480-bh/2);
+  /* the speaker's head on screen at t (after the reframe): top of the hair + centre x */
+  function headAt(t){ const MY=y=>window.mapY?window.mapY(t,y):y, MX=x=>window.mapX?window.mapX(t,x):x, S=window.mapS?window.mapS(t):1;
+    const j=(typeof jawAt==='function')?jawAt(t):null, fb=(typeof FACE_BOX!=='undefined'&&FACE_BOX)?FACE_BOX:null; if(!fb) return {x:540,top:600};
+    const topSrc=j!=null?j-fb[3]*1.25:fb[1]-fb[3]*0.27; return {x:MX(fb[0]+fb[2]/2), top:MY(topSrc)}; }
   function place(bh){
     const P=CFG.pos; let cy=null, surface='video', pad=230, R=null;
     try{
@@ -120,12 +132,24 @@
     if(P==='top') cy=TOP(bh); else if(P==='mid') cy=MID(bh); else if(P==='low') cy=LOW(bh);
     if(ENGINE==='talk'&&R){ const a=cy-bh/2-30, b=cy+bh/2+30;          /* ورقة لو الكتلة كلها برّا مستطيل الفيديو */
       surface=(!R.off&&b>R.y&&a<R.y+R.h)?'video':'paper'; }
+    /* HibAI: never on the face. Full screen + a known face (studio.json ← faceBox / capJaw, 38_jaw.py): above the head when it fits,
+       else just under the jaw (the logo then sits beside the words) */
+    let side=false;
+    try{ if(ENGINE==='talk'&&P==='auto'&&R&&R.w>=1079&&R.h>=1919&&typeof FACE_BOX!=='undefined'&&FACE_BOX){
+      const MY=(tt,y)=>window.mapY?window.mapY(tt,y):y, t1=CFG.from+0.05;
+      const ih=CFG.icon?Math.round(bh*0.95)+26:0, headTop=headAt(t1).top, room=headTop-30-230;
+      let jaw=null; if(typeof CAP_JAW!=='undefined'&&CAP_JAW){ for(const [tt,y] of CAP_JAW) if(tt>=CFG.from-0.3&&tt<=CFG.from+CFG.dur+0.3) jaw=Math.max(jaw||0,MY(t1,y)); }
+      if(room>=bh+ih){ const blockTop=Math.max(230,230+(room-bh-ih)/2); cy=blockTop+ih+bh/2; }
+      else if(jaw&&1480-(jaw+40)>=bh){ cy=jaw+40+bh/2; side=true; }
+      else { cy=230+ih+bh/2; } } }catch(e){}
     if(CFG.surface) surface=CFG.surface; if(CFG.pad!=null) pad=CFG.pad;
-    return {cy,surface,pad};
+    return {cy,surface,pad,side};
   }
   function draw(t){
     if(!active(t)) return;
-    const lt=t-CFG.from, rt=CFG.from+CFG.dur-t, L=layout(), fs=L.fs, lh=L.lh;
+    let c0=CFG.from, cd=CFG.dur; CUR=null;
+    if(CFG.chunks){ const k=CFG.chunks.length, d=CFG.dur/k, i=Math.min(k-1,Math.floor((t-CFG.from)/d)); CUR=CFG.chunks[i]; c0=CFG.from+i*d; cd=d; }
+    const lt=t-c0, rt=c0+cd-t, L=layout(), fs=L.fs, lh=L.lh;
     const kh=CFG.kicker?Math.round(fs*0.62):0, blockH=L.lines.length*lh+kh, PL=place(blockH), cy=PL.cy, top=cy-blockH/2;
     const paper=PL.surface==='paper', card=CFG.style==='card';
     const out=pr(rt,0.24,0);                           /* 0..1 بآخر ربع ثانية */
@@ -138,11 +162,20 @@
       CX.fillStyle=rgba(BGC,0.97); rr(bx,by,bw,bh,44); CX.fill(); CX.shadowColor='transparent';
       if(paper){ CX.strokeStyle=rgba(INKC,0.10); CX.lineWidth=3; rr(bx,by,bw,bh,44); CX.stroke(); }
       CX.fillStyle=ACCC; rr(bx+bw-18-10,by+34,10,bh-68,5); CX.fill();   /* خط التمييز على يمين الكرت (بداية القراءة) */
-    } else if(!paper){
-      const p=PL.pad, g=CX.createLinearGradient(0,top-p,0,top+blockH+p);
-      g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.28,'rgba(0,0,0,0.58)'); g.addColorStop(0.72,'rgba(0,0,0,0.58)'); g.addColorStop(1,'rgba(0,0,0,0)');
-      CX.globalAlpha=alphaAll; CX.fillStyle=g; CX.fillRect(0,top-p,W,blockH+2*p);
-    }
+    }   /* HibAI: no dark band across the screen over the video (it looked heavy) — the words keep a soft shadow of their own */
+    if(CFG.icon&&CFG.icon.complete&&CFG.icon.naturalWidth&&PL.side){
+      /* under-the-jaw hook: the logo pops just under the words (a bit behind them), then flies up to the empty space above the head */
+      const tt=t-CFG.from, pop=pr(tt,0,0.16), fly=pr(tt,0.5,1.0), fe=fly<.5?4*fly*fly*fly:1-Math.pow(-2*fly+2,3)/2;
+      const S=Math.round(lh*0.9), hd=headAt(t), x0=540, y0=cy+lh*0.42+S*0.35, x1=cl(hd.x,150+S*0.62,930-S*0.62), y1=Math.max(150+S*0.62,hd.top-S*0.62-18);
+      const ix=x0+(x1-x0)*fe, iyc=y0+(y1-y0)*fe, sz=S*(pop<1?0.3+0.7*eo(pop)+0.15*Math.sin(pop*Math.PI):1), aH=1-eo(pr(CFG.from+CFG.dur-t,0.24,0));
+      CX.save(); CX.globalAlpha=aH; CX.shadowColor='rgba(0,0,0,0.35)'; CX.shadowBlur=28; CX.shadowOffsetY=8; CX.fillStyle='#FFFFFF';
+      CX.beginPath(); CX.arc(ix,iyc,sz*0.62,0,7); CX.fill(); CX.shadowColor='transparent';
+      CX.drawImage(CFG.icon,ix-sz*0.38,iyc-sz*0.38,sz*0.76,sz*0.76); CX.restore(); }
+    else if(CFG.icon&&CFG.icon.complete&&CFG.icon.naturalWidth){ const k=eo(pr(t-CFG.from,0,0.35)), S0=Math.round(fs*1.25), S=S0*(0.7+0.3*k);
+      const ix=540, iy=top-S-26+lift;
+      CX.save(); CX.globalAlpha=alphaAll*k; CX.shadowColor='rgba(0,0,0,0.35)'; CX.shadowBlur=30; CX.shadowOffsetY=10; CX.fillStyle='#FFFFFF';
+      CX.beginPath(); CX.arc(ix,iy+S/2,S*0.62,0,7); CX.fill(); CX.shadowColor='transparent';
+      CX.drawImage(CFG.icon,ix-S*0.38,iy+S/2-S*0.38,S*0.76,S*0.76); CX.restore(); }
     const txtC=(card||paper)?INKC:'#FFFFFF', glow=!card&&!paper;
     if(CFG.kicker){ CX.globalAlpha=alphaAll; const kf=Math.round(fs*0.42);
       CX.font='800 '+kf+'px '+FONTF+FB; const kw=CX.measureText(CFG.kicker).width, ky=top+kh*0.35+lift;
@@ -164,7 +197,7 @@
         CX.font='900 '+fs+'px '+FONTF+FB;
         const run=w.em&&runs.find(r=>p.i>=r.first&&p.i<=r.last), lit=run&&run.ks>0.55;
         CX.fillStyle=lit?onAcc():txtC;
-        if(glow&&!lit){ CX.shadowColor='rgba(0,0,0,0.65)'; CX.shadowBlur=24; CX.shadowOffsetY=5; }
+        if(glow&&!lit){ CX.shadowColor='rgba(0,0,0,0.45)'; CX.shadowBlur=18; CX.shadowOffsetY=3; }
         CX.fillText(w.t,p.xr,y+dy+fs*0.04); CX.restore(); } });
     CX.restore();
   }

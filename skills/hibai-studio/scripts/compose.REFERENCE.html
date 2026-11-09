@@ -23,7 +23,10 @@ let CAP_JAW=null, CAP_WORDS=0, CAP_SCALE=0.8, LATIN_FONT='Inter', HOT_FONT=null;
 let THEME_RAW=null;
 /* HibAI backgrounds (motion/backgrounds.js): theme.json ← bgStyle · bgBrand · bgColor · bgImage — shown wherever the video is not full screen */
 let BG_STYLE=null, BG_BRAND=true, BG_COLOR=null; const BGI=new Image();
-let PIP_SHAPE='circle', FACE_BOX=null;   /* theme.json ← pip: circle|square|rect · studio.json ← faceBox (38_jaw.py) */
+let PIP_SHAPE='circle', FACE_BOX=null;
+/* HibAI reframe: full-screen shots zoom in gently (≤1.3×, bottom kept) so there's no big empty space above the head.
+   theme.json ← fullZoom: 'auto' (default — head top lands ~330 px, from 38_jaw.py) · a number (1 = off) */
+let FULL_ZOOM='auto', HEAD_Y=330, _FT=0;   /* theme.json ← pip: circle|square|rect · studio.json ← faceBox (38_jaw.py) */
 function init(d){
   CAPS=d.cards;VEND=d.total;OUTRO=d.outro;DUR=VEND+OUTRO;
   BEHIND=d.behind||null;
@@ -35,6 +38,7 @@ function init(d){
   if(t.bgStyle){ BG_STYLE=t.bgStyle; BG_BRAND=t.bgBrand!==false; BG_COLOR=t.bgColor||null; }
   if(t.bgImage){ BGI.src=t.bgImage; BG_STYLE=BG_STYLE||'image'; }
   if(t.pip) PIP_SHAPE=t.pip; setPip(PIP_SHAPE);
+  if(t.fullZoom!=null) FULL_ZOOM=t.fullZoom;
   if(typeof t.capWords==='number') CAP_WORDS=t.capWords;      /* 2 = 1–2 words at a time · 4 = 3–4 · 0 = whole lines */
   if(typeof t.capScale==='number') CAP_SCALE=t.capScale;      /* caption size (1 = the old big size) */
   FONT=_fontFace(FONT,t.fontFile); LATIN_FONT=_fontFace(LATIN_FONT,t.latinFontFile);
@@ -150,7 +154,7 @@ function hookScale(t){ const H0=HOOK_END; if(!H0||t>H0+0.3) return 1;
   return 1.30-0.30*ease((t-H0)/0.3); }
 function hookZoom(t){ if(t>=VEND) return; const s=hookScale(t); if(s<=1.001||!isFull(vtarget(t))) return;
   if(_behindLine(t)) return;   /* 28 سبتمبر: الزوم يعيد رسم الفيديو فوق «ورا الراس/طبقات» فيمسحها، وقناع الشخص ما يطابق الصورة المكبّرة — النص نفسه ضربة الهوك */
-  const [cx,cy]=hookCenter(); X.save(); X.translate(cx,cy); X.scale(s,s); X.translate(-cx,-cy); X.drawImage(VF,0,0,W,H); X.restore(); }
+  const [cx,cy]=hookCenter(), c=vcrop(R_FULL,VF.naturalWidth||1080,VF.naturalHeight||1920); X.save(); X.translate(cx,cy); X.scale(s,s); X.translate(-cx,-cy); X.drawImage(VF,c.sx,c.sy,c.cw,c.ch,0,0,W,H); X.restore(); }
 /* مركز الزوم = وجهه (2 أكتوبر — كان نقطة ثابتة): theme.hookCenter [x,y] (يكتبه 22b_hook_center.py) ← وإلا وسط وجهه من behind.json بمدى الهوك ← وإلا 540,760 */
 let _HC=null;
 function hookCenter(){ if(_HC) return _HC;
@@ -184,6 +188,9 @@ function vtrans(t){
   let i=SCENES.findIndex(s=>t>=s.s&&t<s.e); if(i<0)i=SCENES.length-1;
   let a=SCENES[i].m,b=a,k=1;
   if(t<SCENES[i].s+TR&&i>0){a=SCENES[i-1].m;b=SCENES[i].m;k=eio(pr(t,SCENES[i].s,SCENES[i].s+TR));}
+  /* HibAI: PiP ↔ visuals only — the frame shrinks/grows at its own place (sliding off the bottom crossed the caption strip) */
+  const _pt=P=>({x:P.x+P.w/2-1,y:P.y+P.h/2-1,w:2,h:2,r:1,pip:true});
+  if(a!==b&&a.pip&&b.off) b=_pt(a); else if(a!==b&&b.pip&&a.off) a=_pt(b);
   return {a,b,k};
 }
 function vrect(t){
@@ -192,15 +199,30 @@ function vrect(t){
 }
 /* قصّ الفيديو لمستطيل: ⛔ v3.8 قاعدة المستخدم — بالكرت القصّ ثابت من فوق راسه بمساحة آمنة (cardTop من 23_headcrop.py) بلا تتبع.
    kc: 0 = ملء الشاشة (faceAnchor) · 1 = كرت (cardTop + cardZoom) */
+/* zoom for the full-screen scene at t (constant per scene: no breathing). During a transition out of a full scene → that scene's zoom */
+function fullZoomAt(t){ if(typeof FULL_ZOOM==='number') return cl(FULL_ZOOM,1,1.6); if(FULL_ZOOM!=='auto'||!CAP_JAW||!FACE_BOX) return 1;
+  if(BEHIND&&Array.isArray(BEHIND.lines)&&BEHIND.lines.length) return 1;   /* text behind the head needs the original framing */
+  resolveScenes(); let i=SCENES.findIndex(s=>t>=s.s&&t<s.e); if(i<0) i=SCENES.length-1; let sc=SCENES[i];
+  if(!isFull(sc.m)&&i>0&&t<sc.s+TR&&isFull(SCENES[i-1].m)) sc=SCENES[i-1];
+  if(!isFull(sc.m)) return 1; if(sc._fz) return sc._fz;
+  const ys=CAP_JAW.filter(c=>c[0]>=sc.s&&c[0]<Math.min(sc.e,VEND||99)).map(c=>c[1]).sort((a,b)=>a-b);
+  if(!ys.length) return (sc._fz=1); const head=ys[ys.length>>1]-FACE_BOX[3]*1.25;
+  return (sc._fz=cl((1920-HEAD_Y)/Math.max(1,1920-head),1,1.3)); }
+/* source (1080×1920) → screen for full-screen shots at t: captions under the jaw and the hook follow the reframe */
+function _fullC(t){ const z=fullZoomAt(t); if(z<=1.001||!isFull(vtarget(t))) return null; const o=_FT; _FT=t; const c=vcrop(R_FULL,1080,1920); _FT=o; return c; }
+window.mapY=(t,y)=>{ const c=_fullC(t); return c?(y-c.sy)*c.sc:y; };
+window.mapX=(t,x)=>{ const c=_fullC(t); return c?(x-c.sx)*c.sc:x; };
+window.mapS=t=>{ const c=_fullC(t); return c?c.sc:1; };
 function vcrop(R,sw,shh){
   if(R.pip){   /* PiP: a box around the face (face ≈ 45% of the frame height), same aspect as the frame */
     const fb=FACE_BOX||[sw*0.3,shh*0.22,sw*0.4,sw*0.4], kx=sw/1080, ky=shh/1920;
     const ch=Math.min(shh,fb[3]*ky*2.3), cw=Math.min(sw,ch*R.w/R.h), sc=R.w/cw;
     const sx=cl(fb[0]*kx+fb[2]*kx/2-cw/2,0,sw-cw), sy=cl(fb[1]*ky+fb[3]*ky*0.55-ch/2,0,shh-ch);
     return {sc,sx,sy,cw,ch}; }
-  const kc=CARD_TOP==null?0:cl((1919-R.h)/300,0,1), z=lerp(1,CARD_ZOOM,kc);
+  const kc=CARD_TOP==null?0:cl((1919-R.h)/300,0,1), kf=cl((1919-R.h)/300,0,1), zF=fullZoomAt(_FT), z=lerp(1,CARD_ZOOM,kc)*lerp(zF,1,kf);
   const sc=Math.max(R.w/sw,R.h/shh)*z, cw=R.w/sc, ch=R.h/sc;
-  const sx=(sw-cw)/2, sy0=(shh-ch)*FACE_ANCH, sy=CARD_TOP==null?sy0:lerp(sy0,cl(CARD_TOP*shh,0,shh-ch),kc);
+  const fx=(zF>1.001&&FACE_BOX)?FACE_BOX[0]*sw/1080+FACE_BOX[2]*sw/2160:sw/2;   /* reframe: centred on the face, bottom kept */
+  const sx=cl(lerp(fx-cw/2,(sw-cw)/2,kf),0,sw-cw), sy0=(shh-ch)*(zF>1.001?lerp(1,FACE_ANCH,kf):FACE_ANCH), sy=CARD_TOP==null?sy0:lerp(sy0,cl(CARD_TOP*shh,0,shh-ch),kc);
   return {sc,sx,sy,cw,ch};
 }
 function drawVideo(t){
@@ -308,7 +330,7 @@ function jawAt(t){ if(!CAP_JAW) return null; let lo=0,hi=CAP_JAW.length-1; if(t<
   const k=b[0]>a[0]?cl((t-a[0])/(b[0]-a[0]),0,1):0; return a[1]+(b[1]-a[1])*k; }
 const CAP_MAX_BOTTOM=1480;   /* safe zone: nothing below 1500 */
 /* the caption top for a full-screen shot: under the jaw, but the whole caption stays above the safe line */
-function capTop(t,h,def){ const j=jawAt(t); if(j==null) return def; return Math.min(j+26, CAP_MAX_BOTTOM-h); }
+function capTop(t,h,def){ const j0=jawAt(t); if(j0==null) return def; const j=window.mapY(t,j0); return Math.min(j+26, CAP_MAX_BOTTOM-h); }
 /* consecutive Latin words ("Claude Code") read left-to-right inside a right-to-left line: keep them as one block */
 function _mergeLatin(ws){ const out=[]; for(const w of ws){ const p=out[out.length-1];
     if(p&&_isLatin(p.t)&&_isLatin(w.t)&&!/[.,!?؟]$/.test(p.t)) out[out.length-1]={...p,t:p.t+' '+w.t,e:w.e,hot:p.hot||w.hot};
@@ -1119,7 +1141,7 @@ function outro(t){ const s=VEND; if(t<s)return;
 /* ---------- master ---------- */
 function draw(t){
   /* تصفير حالة الرسم بكل فريم — ضمانة إن أي فريم يبدأ نظيفاً */
-  X.setTransform(1,0,0,1,0,0); X.globalAlpha=1; X.filter='none';
+  _FT=t; X.setTransform(1,0,0,1,0,0); X.globalAlpha=1; X.filter='none';
   X.shadowColor='transparent'; X.shadowBlur=0; X.shadowOffsetY=0; X.globalCompositeOperation='source-over';
   X.clearRect(0,0,W,H);X.fillStyle=BG;X.fillRect(0,0,W,H);
   if(!isFull(vtarget(t))||vtrans(t).k<1||t>=VEND||(t<VEND&&cutoutActive(t))) safe(backdrop,t,'backdrop');   /* hidden under a full-screen video — skip the work */

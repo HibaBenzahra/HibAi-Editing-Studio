@@ -36,7 +36,7 @@
     const cols = 72, rows = Math.round(cols * H / W), sx = W / cols, sy = H / rows, f = [], drift = t * 0.035;
     for (let j = 0; j <= rows; j++) { f[j] = []; for (let i = 0; i <= cols; i++) f[j][i] = fbm(i * 0.055 + drift, j * 0.055 - drift * 0.6); }
     X.lineWidth = Math.max(1, W / 540); X.lineJoin = 'round';
-    const levels = density || 11;
+    const levels = density || 8;   /* 7 contour lines (was 10 — 30% calmer, HibAI feedback) */
     for (let L = 1; L < levels; L++) { const lv = 0.18 + L * (0.64 / levels); X.strokeStyle = rgba(c.fg, 0.16 + 0.34 * (L % 3 === 0 ? 1 : 0.55)); X.beginPath();
       for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
         const a = f[j][i], b = f[j][i + 1], d = f[j + 1][i], e = f[j + 1][i + 1], x = i * sx, y = j * sy;

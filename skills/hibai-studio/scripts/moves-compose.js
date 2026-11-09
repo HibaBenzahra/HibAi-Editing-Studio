@@ -255,6 +255,8 @@
     const VF = document.getElementById('VF'); if (!VF || !VF.naturalWidth) return;
     const sw = VF.naturalWidth, shh = VF.naturalHeight, sc = Math.max(R.w / sw, R.h / shh), cw = R.w / sc, ch = R.h / sc;
     const fa = typeof FACE_ANCH === 'number' ? FACE_ANCH : 0.3;
+    if (R.w >= 1079 && R.h >= 1919 && typeof vcrop === 'function') { const c = vcrop({ x: 0, y: 0, w: 1080, h: 1920, r: 0 }, sw, shh);   /* same reframe as the engine */
+      Y.drawImage(VF, c.sx, c.sy, c.cw, c.ch, R.x, R.y, R.w, R.h); return; }
     Y.drawImage(VF, (sw - cw) / 2, (shh - ch) * fa, cw, ch, R.x, R.y, R.w, R.h);
   }
   /* المتحدث مقصوص (ماك): صورة bt/person لهالفريم بنفس تأطير MV.video — للحركات 51–61. مرّره كما هو: person: MV.person

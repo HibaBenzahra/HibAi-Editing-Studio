@@ -32,6 +32,7 @@ caps, theme, studio = load("caps.json", None), load("theme.json", {}), load("stu
 if not caps or not caps.get("cards"):
     sys.exit("❌ no caps.json — run the captions step first")
 LAY = opt("--layout") or theme.get("layout") or "split"
+LAY = {"avatar": "full", "auto": "split"}.get(LAY, LAY)   # dashboard names: «me the whole video» = full · auto → split (then adjust by content)
 if LAY not in ("split", "alternate", "splitmix", "visuals", "pip", "cutout", "full"):
     sys.exit(f"❌ unknown layout «{LAY}»")
 hook_end = float((theme.get("hook") or {}).get("dur") or 0)
@@ -103,4 +104,4 @@ if cuts:
     print("✂️ cut-out moments — run once each (Mac: Vision · Windows/Linux: rembg):")
     for a, b in cuts:
         print(f'   node "{os.path.join(here, "11_behind_text.js")}" "{W}" cutout {a}-{b}')
-print("Where visuals go: split → y 160–600 · visuals only → y 160–1300 · PiP → y 160–750, rect frame 160–630 (you: bottom-left, x 70–410) · cut-out → y 160–850, beside you.")
+print("Where visuals go: split → y 160–600 · visuals only → y 160–1050 · PiP → y 160–750, rect frame 160–630 (you: bottom-left, x 70–410) · cut-out → y 160–850, beside you.")

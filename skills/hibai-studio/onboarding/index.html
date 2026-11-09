@@ -155,6 +155,12 @@ input:focus,textarea:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(14
 .hint kbd{border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-family:inherit}
 
 /* summary + done */
+.saved{margin:26px auto 0;max-width:460px;padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--field);text-align:center}
+.saved .k{font-weight:800;font-size:17px}.saved .k em{display:block;font:italic 400 15px var(--serif);color:var(--muted);direction:ltr}
+.saved .chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:12px 0 4px}.saved .chips span{padding:5px 10px;border-radius:99px;border:1px solid var(--line);font-size:13px;color:var(--muted)}
+.saved .chips i{display:inline-block;width:12px;height:12px;border-radius:50%;margin:0 1px;vertical-align:-1px;border:1px solid rgba(255,255,255,.25)}
+.saved .nav{flex-direction:column;align-items:stretch;gap:8px;margin-top:14px}
+.remember{margin-top:18px;width:100%}
 .sum{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:8px}
 .sum li{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--field)}
 .sum .k{color:var(--muted);font-size:13px}.sum .v{font-weight:700;overflow-wrap:anywhere}
@@ -431,6 +437,7 @@ const STEPS=[
     <label><small>الجملة الأخيرة — قصيرة وكتبان كبيرة</small><input type="text" id="cta" maxlength="60" value="${esc(A.cta)}" placeholder="تبعني للجزء الثاني"></label>
     <label><small>كلمة يكتبوها ف الكومنت (اختياري)</small><input type="text" id="word" value="${esc(A.word)}" placeholder="CODE"></label></div>`:''}`},
 ];
+let SAVED=null, REMEMBER=true;   // saved settings from a past video · «save for my next videos»
 let step=-1;   // -1 welcome · 0..n-1 steps · n summary · n+1 done
 
 function layDiagram(v){ const P=(st,c='')=>`<span class="p ${c}" style="${st}"></span>`, V=st=>`<span class="v" style="${st}"></span>`;
@@ -484,9 +491,10 @@ function welcome(){
   $('#card').innerHTML=`<div class="welcome"><h1 class="hello">مرحبا <em>بيك</em></h1><div class="big-mark"><b>Hib</b><span>AI</span></div><div class="studio">Studio</div>
     <p class="lead">جاوب على أسئلة بالزربة باش نقدر نقاد ليك الفيديو بالطريقة اللي بغيتي.</p>
     <p class="lead-en">Answer a few quick questions so I can edit your video exactly the way you want.</p>
-    <div class="nav" style="justify-content:center"><button type="button" class="btn go" id="next">يلاه نبداو <span class="sub2">let's go</span></button></div>
+    ${SAVED?savedBox():`<div class="nav" style="justify-content:center"><button type="button" class="btn go" id="next">يلاه نبداو <span class="sub2">let's go</span></button></div>`}
     <div class="by"><img src="assets/pfp.png" alt="" onerror="this.remove()"><span>Welcome to the HibAI community · by</span><b>@hibssssi</b></div></div>`;
-  $('#next').onclick=()=>go(1); $('#next').focus();
+  $('#next').onclick=()=>{ if(SAVED) toast('حليت الإعدادات اللي سجّلتي قبل — بدّل اللي بغيتي'); go(1); };
+  if($('#useSaved')){ $('#useSaved').onclick=()=>send({...SAVED, remember:true, reused:true}); $('#useSaved').focus(); } else $('#next').focus();
 }
 function mark(g){ if(g) touched.add(g); }
 function wire(s){
@@ -541,6 +549,16 @@ function go(d){ step=Math.max(-1,Math.min(STEPS.length,step+d)); render(); windo
 
 
 /* ═══ Summary + save (same payload as before → 00_onboard.py) ═══ */
+/* a returning user: their saved settings in one look + one click to reuse them */
+function savedBox(){
+  const p=SAVED, hb=p.hibai||{}, c=(p.identity||{}).colors, chip=s=>`<span>${s}</span>`;
+  const chips=[c?chip(['bg','ink','acc'].map(k=>`<i style="background:${c[k]}"></i>`).join('')):'',
+    p.font?chip(esc(p.font)):'', hb.latinFont?chip(esc(hb.latinFont)):'', hb.layout?chip(esc(nameOf(LAYOUTS,hb.layout))):'',
+    hb.bg&&hb.bg.style?chip(esc(nameOf(BG_STYLES,hb.bg.style))):'', hb.capWords?chip(esc(nameOf(CAPWORDS,String(hb.capWords)))):''].join('');
+  return `<div class="saved"><div class="k">💾 عندك إعدادات مسجّلة من قبل<em>You have saved settings</em></div><div class="chips">${chips}</div>
+    <div class="nav"><button type="button" class="btn go" id="useSaved">خدم بإعداداتي المسجّلة <span class="sub2">use my saved settings</span></button>
+    <button type="button" class="btn ghost" id="next">بدّل شي حاجة <span class="sub2">change something</span></button></div></div>`;
+}
 function collect(){
   let identity={mode:'auto'};
   const c=colors();
@@ -558,10 +576,11 @@ function collect(){
     endCard:{on:A.endOn, handle:A.handle, cta:A.cta, word:A.word},
     hibai:{goal:A.goal, audience:A.audience, vibe:A.vibe, hook:A.hookAuto?'':A.hook, hookAuto:A.hookAuto,
       keywords:A.keywords.split(/[,،]/).map(s=>s.trim()).filter(Boolean), bar:A.bar, autoRetakes:A.autoRetakes, enSubs:A.enSubs,
-      audio:A.audio, light:A.light, latinFont:A.latFont, fontUpload:A.fontUp||undefined, latinFontUpload:A.latUp||undefined, bg:{style:A.bgStyle, color:A.bgColor, brand:A.bgBrand}, bgImage:A.bgImg||undefined,
+      audio:A.audio, light:A.light, latinFont:A.latFont, fontUpload:A.fontUp||savedUp('fontUpload'), latinFontUpload:A.latUp||savedUp('latinFontUpload'), bg:{style:A.bgStyle, color:A.bgColor, brand:A.bgBrand}, bgImage:A.bgImg||savedUp('bgImage'),
       layout:A.layout, pip:A.pip, capWords:+A.capWords, capFx:A.capFx, effects:A.fxOn},
     answered:[...touched]};
 }
+function savedUp(k){ const v=SAVED&&SAVED.hibai&&SAVED.hibai[k]; return typeof v==='string'?v:undefined; }
 const nameOf=(list,v)=>{const o=list.find(x=>x.v===v); return o?o.n:v;};
 function summary(){
   const c=colors(), pal=PALETTES.find(p=>p.id===A.palette);
@@ -584,9 +603,11 @@ function summary(){
   ].map(([k,v,t])=>[k,v,at(t)]);
   $('#card').innerHTML=`<h1 class="dr">هادشي اللي اخترتي</h1><p class="en">Here's your brief</p>
     <ul class="sum">${rows.map(([k,v,i])=>`<li><div><div class="k">${k}</div><div class="v">${v}</div></div><button type="button" data-goto="${i}">بدّل</button></li>`).join('')}</ul>
-    <div class="nav"><button type="button" class="btn go" id="save">سجّل ويلاه نبداو <span class="sub2">save</span></button><button type="button" class="btn ghost" id="back">رجع</button></div>`;
+    <button type="button" class="toggle remember ${REMEMBER?'on':''}" id="remember" role="switch" aria-checked="${REMEMBER}"><span class="state">سجّل هاد الاختيارات للفيديوهات الجاية<span style="display:block;font:italic 400 15px var(--serif);color:var(--muted);direction:ltr;text-align:right">${REMEMBER?'Saved for my next videos — no need to fill this again':'Only for this video — next time starts from my saved settings'}</span></span><span class="switch"></span></button>
+    <div class="nav"><button type="button" class="btn go" id="save">يلاه نبداو <span class="sub2">start</span></button><button type="button" class="btn ghost" id="back">رجع</button></div>`;
+  $('#remember').onclick=()=>{ REMEMBER=!REMEMBER; summary(); };
   $$('[data-goto]').forEach(b=>b.onclick=()=>{ step=+b.dataset.goto; render(); });
-  $('#back').onclick=()=>go(-1); $('#save').onclick=()=>send(collect());
+  $('#back').onclick=()=>go(-1); $('#save').onclick=()=>send({...collect(), remember:REMEMBER});
 }
 async function send(obj){
   obj.savedAt=new Date().toISOString();
@@ -600,7 +621,7 @@ function done(obj,saved){
   step=STEPS.length+1; chrome(); $('#bar').style.width='100%';
   const o={...obj}; if(o.identity&&o.identity.logo) o.identity={...o.identity,logo:'(صيفط اللوغو ف الشات)'};
   $('#card').innerHTML=`<div class="done"><div class="tick">✓</div>
-    <h1 class="dr">${!saved?'نسخ هادشي وصيفطو لـ Claude':obj.skip?'واخا، خليها عليا':'تسجّل!'}</h1>
+    <h1 class="dr">${!saved?'نسخ هادشي وصيفطو لـ Claude':obj.skip?'واخا، خليها عليا':obj.reused?'يلاه! بإعداداتك المسجّلة':obj.remember===false?'واخا — غير لهاد الفيديو':'تسجّل للفيديوهات الجاية!'}</h1>
     <p class="en" style="text-align:center">${saved?'Saved, head back to Claude':'Copy this and send it to Claude'}</p>
     <p class="help" style="text-align:center">${saved?'رجع لـ Claude — الخدمة بدات. تقدر تسدّ هاد الصفحة.':'الصفحة محلولة بلا Claude، ما قدرتش نسجّل براسي.'}</p>
     ${saved?'':`<pre>${esc(JSON.stringify(o,null,2))}</pre>`}</div>`;
@@ -618,6 +639,7 @@ async function prefill(){
   if(!SERVER) return;
   let p=null; try{ const r=await fetch('/api/profile'); if(r.ok) p=await r.json(); }catch(e){}
   if(!p||!p.version||p.skip) return;
+  SAVED=p;
   A.note=p.note||'';
   const id=p.identity||{};
   if(id.mode==='palette'&&id.palette){ A.idMode='palette'; A.palette=id.palette; }
@@ -639,7 +661,6 @@ async function prefill(){
   if(p.font) A.arFont=p.font; if(Array.isArray(hb.effects)) A.fxOn=[...hb.effects];
   if(p.moves){ A.movesMode=p.moves.mode||A.movesMode; A.movesOn=[...(p.moves.on||[])]; A.movesOff=[...(p.moves.off||[])]; }
   (p.answered||[]).forEach(g=>touched.add(g));
-  toast('حليت الإعدادات اللي سجّلتي قبل — بدّل اللي بغيتي');
 }
 prefill().finally(render);
 </script>

@@ -112,7 +112,8 @@
          after:'Setting up…', done:'Ready', progress:{s, e}, light:{bg,side,ink,muted,accent}} */
   HK.desktopApp = (t, o) => { if (t < o.s || t > o.e) return; const R = o.R || { x: 80, y: 250, w: 920, h: 900 };
     const c = Object.assign({ bg: '#FAF9F5', side: '#F0EEE6', ink: '#1F1E1D', muted: '#6B6A66', sel: '#E6E2D6', accent: '#D97757' }, o.light || {});
-    const sl = 1 - E((t - o.s) / .45), a = Math.min(1, 1 - E((t - (o.e - .25)) / .25)); X.save(); X.globalAlpha *= a; X.translate(sl * 1100, 0); X.direction = 'ltr';
+    const sl = 1 - E((t - o.s) / .45), a = Math.min(1 - sl, 1 - E((t - (o.e - .25)) / .25)), sc = 1 - .06 * sl, cx = R.x + R.w / 2, cy = R.y + R.h / 2;
+    X.save(); X.globalAlpha *= a; X.translate(cx, cy + 30 * sl); X.scale(sc, sc); X.translate(-cx, -cy); X.direction = 'ltr';   /* fade + settle in place: never slides through the safe zone */
     SH(50, 22, .35); X.fillStyle = c.bg; RR(R.x, R.y, R.w, R.h, 26); X.fill(); NS(); X.fillStyle = c.side; RR(R.x, R.y, 250, R.h, 26); X.fill(); X.fillRect(R.x + 226, R.y, 24, R.h);
     if (o.brand) HK.img(o.brand, R.x + 30, R.y + 34, 44, 44); X.fillStyle = c.ink; X.font = '600 34px ' + lat(); X.textAlign = 'left'; X.textBaseline = 'middle'; X.fillText(o.name || '', R.x + 86, R.y + 57);
     const tabs = o.tabs || ['Chat', 'Code'], clicked = o.clickAt != null && t >= o.clickAt + .1, act = clicked ? o.clickTab : (o.startTab || tabs[0]);
@@ -177,12 +178,12 @@
     X.restore(); X.restore(); }, 60);
 
   /* Free area for visuals at time t, from the current layout (studio.json scenes · 44_layout.py) — place every visual inside it:
-     split → y 160–~600 · PiP → y 160–750 (circle/square) / 630 (rect) · visuals only → y 160–1260 · cut-out → y 160–860 · you full screen → top band y 160–600 */
+     split → y 160–~600 · PiP → y 160–750 (circle/square) / 630 (rect) · visuals only → y 160–1050 · cut-out → y 160–860 · you full screen → top band y 160–600 */
   HK.zone = t => { const R = typeof vtarget === 'function' ? vtarget(t) : null, Z = (y, h) => ({ x: 70, y, w: 940, h });
     if (typeof cutoutActive === 'function' && cutoutActive(t)) return Z(160, 700);
     if (!R || (R.w >= 1079 && R.h >= 1919)) return Z(160, 440);
     if (R.pip) return Z(160, R.y - 380);   /* the caption sits just above the frame */
-    if (R.off) return Z(160, 1100);
+    if (R.off) return Z(160, 890);   /* stays above the like/share column (y 1050+) and the caption */
     return Z(160, Math.max(300, R.y - 360)); };
   /* Fit a w×h design into a zone (scaled down when the zone is smaller): HK.fit(HK.zone(t), 920, 900, R => HK.desktopApp(t, {R, …})) */
   HK.fit = (Z, w, h, fn) => { const s = Math.min(1, Z.w / w, Z.h / h); X.save(); X.translate(Z.x + (Z.w - w * s) / 2, Z.y + (Z.h - h * s) / 2); X.scale(s, s);
