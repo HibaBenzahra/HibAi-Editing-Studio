@@ -53,8 +53,8 @@ Never jump to the final render. Every edit goes through these gates, in this ord
   `python scripts/39_fonts.py <work>` (the theme step runs it); `39_fonts.py list` shows them. An uploaded .ttf/.otf works too.
 
 - **Written hook** (`theme.json` ← `hook`): follows `capWords` too (1–2 words at a time), no dark band behind it, never on the
-  face (above the head when there's room, else under the jaw). `hook.icon: "logo-claude.svg"` (a file in `assets/`) = the brand's
-  logo pops just under the words, then flies up into the empty space above the head.
+  face (above the head when there's room, else under the jaw). Optional `hook.icon: "logo-x.svg"` (a file in `assets/`) shows that
+  logo with the words. Special moves for it (like `iconMove: "fly"`) only when the user asks — not a default.
 - **Framing:** full-screen shots zoom in gently by themselves (`fullZoom: "auto"`, ≤1.3×) so there's no big empty space above the
   head — head top ≈ 330 px. Needs `38_jaw.py`. `fullZoom: 1` turns it off. Captions, hook and motions follow the new framing.
 - **Every visual stays on screen ≥ 1.5–2 s** (one sentence at least) — a moment that flashes by is a wasted visual.

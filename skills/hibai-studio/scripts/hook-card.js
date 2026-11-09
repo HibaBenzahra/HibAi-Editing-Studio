@@ -10,7 +10,8 @@
        "style": "bold",     ← bold (نص ضخم — فوق الفيديو: أبيض على ظل غامق · فوق الورقة: بلون الحبر بلا ظل) · card (كرت بألوان الثيم)
        "kicker": "",        ← سطر صغير فوق (اسم البرنامج/الضيف) — اختياري
        "em": ["10 دقايق"],  ← الكلمات اللي تاخذ لون التمييز (افتراضاً: الرقم وكلمته · أو *كلمة* بالنص)
-       "icon": "logo-claude.svg",  ← HibAI: a logo/icon (file in <work>/assets/) that pops above the hook — the brand the hook names
+       "icon": "logo-claude.svg",  ← HibAI: a logo/icon (file in <work>/assets/) shown with the hook — above the words, or beside them under the jaw
+       "iconMove": "fly",          ← optional, only when asked: the logo pops just under the words, then flies to the space above the head
        "keepCaps": false }  ← الكابشن (والسؤال الكبير وكولاج الكلام) يختفي وقت الهوك — نصّان مع بعض = المشاهد ما يقرا ولا واحد
    الألوان كلها من الثيم (acc للتمييز) — وإن نقص الثيم: ألوان المحرّك نفسه، وإلا أبيض/أسود محايد. لا لون هوية ثابت هني.   */
 (function(){
@@ -51,6 +52,7 @@
       for(let i=0;i<ws.length;i+=per) CFG.chunks.push(ws.slice(i,i+per).join(' '));
       CFG.dur=Math.max(CFG.dur,CFG.chunks.length*1.0); }
     if(hook.icon){ const im=new Image(); im.src='assets/'+hook.icon; CFG.icon=im; }
+    CFG.iconMove=hook.iconMove||'';
   }
   const active=t=>!!CFG&&t>=CFG.from&&t<CFG.from+CFG.dur;
   const hideCap=t=>active(t)&&!CFG.keepCaps&&t<CFG.from+CFG.dur-0.2;   /* الكابشن يرجع مع طلعة الهوك — بلا فراغ بينهما */
@@ -155,6 +157,10 @@
     const out=pr(rt,0.24,0);                           /* 0..1 بآخر ربع ثانية */
     const alphaAll=1-eo(out), lift=-34*eo(out);
     CX.save(); CX.direction='rtl'; CX.textBaseline='middle'; CX.textAlign='right';
+    const FLY=CFG.iconMove==='fly', SIDE=PL.side&&CFG.icon&&CFG.icon.naturalWidth&&!FLY, S0s=Math.round(lh*0.8), SH=SIDE?Math.round((S0s*1.24+18)/2):0;
+    const G=Math.max(...L.lines.map(l=>l.w))+18+S0s*1.24, FIT=SIDE&&G>780?780/G:1;   /* words + logo stay inside x 150..930 (like/share column at 950+) */
+    if(FIT<1){ CX.translate(540,cy); CX.scale(FIT,FIT); CX.translate(-540,-cy); }
+    if(SH) CX.translate(-SH,0);   /* words + logo side by side, centred together */
     /* الخلفية: card = كرت بألوان الثيم · bold فوق الفيديو = ظل غامق محايد بعرض الشاشة · bold فوق الورقة = لا شي (الورقة نفسها الخلفية) */
     if(card){
       const bw=Math.max(...L.lines.map(l=>l.w))+120, bh=blockH+90, bx=540-bw/2, by=top-45+lift;
@@ -163,16 +169,16 @@
       if(paper){ CX.strokeStyle=rgba(INKC,0.10); CX.lineWidth=3; rr(bx,by,bw,bh,44); CX.stroke(); }
       CX.fillStyle=ACCC; rr(bx+bw-18-10,by+34,10,bh-68,5); CX.fill();   /* خط التمييز على يمين الكرت (بداية القراءة) */
     }   /* HibAI: no dark band across the screen over the video (it looked heavy) — the words keep a soft shadow of their own */
-    if(CFG.icon&&CFG.icon.complete&&CFG.icon.naturalWidth&&PL.side){
-      /* under-the-jaw hook: the logo pops just under the words (a bit behind them), then flies up to the empty space above the head */
+    if(CFG.icon&&CFG.icon.complete&&CFG.icon.naturalWidth&&PL.side&&FLY){
+      /* iconMove:'fly' (on request): the logo pops just under the words (a bit behind them), then flies up to the empty space above the head */
       const tt=t-CFG.from, pop=pr(tt,0,0.16), fly=pr(tt,0.5,1.0), fe=fly<.5?4*fly*fly*fly:1-Math.pow(-2*fly+2,3)/2;
       const S=Math.round(lh*0.9), hd=headAt(t), x0=540, y0=cy+lh*0.42+S*0.35, x1=cl(hd.x,150+S*0.62,930-S*0.62), y1=Math.max(150+S*0.62,hd.top-S*0.62-18);
       const ix=x0+(x1-x0)*fe, iyc=y0+(y1-y0)*fe, sz=S*(pop<1?0.3+0.7*eo(pop)+0.15*Math.sin(pop*Math.PI):1), aH=1-eo(pr(CFG.from+CFG.dur-t,0.24,0));
       CX.save(); CX.globalAlpha=aH; CX.shadowColor='rgba(0,0,0,0.35)'; CX.shadowBlur=28; CX.shadowOffsetY=8; CX.fillStyle='#FFFFFF';
       CX.beginPath(); CX.arc(ix,iyc,sz*0.62,0,7); CX.fill(); CX.shadowColor='transparent';
       CX.drawImage(CFG.icon,ix-sz*0.38,iyc-sz*0.38,sz*0.76,sz*0.76); CX.restore(); }
-    else if(CFG.icon&&CFG.icon.complete&&CFG.icon.naturalWidth){ const k=eo(pr(t-CFG.from,0,0.35)), S0=Math.round(fs*1.25), S=S0*(0.7+0.3*k);
-      const ix=540, iy=top-S-26+lift;
+    else if(CFG.icon&&CFG.icon.complete&&CFG.icon.naturalWidth){ const k=eo(pr(t-CFG.from,0,0.35)), S0=SIDE?S0s:Math.round(fs*1.25), S=S0*(0.7+0.3*k);
+      const mw=Math.max(...L.lines.map(l=>l.w)), ix=SIDE?540+mw/2+18+S0*0.62:540, iy=SIDE?cy-S/2+lift:top-S-26+lift;   /* default: beside the words under the jaw, above them otherwise */
       CX.save(); CX.globalAlpha=alphaAll*k; CX.shadowColor='rgba(0,0,0,0.35)'; CX.shadowBlur=30; CX.shadowOffsetY=10; CX.fillStyle='#FFFFFF';
       CX.beginPath(); CX.arc(ix,iy+S/2,S*0.62,0,7); CX.fill(); CX.shadowColor='transparent';
       CX.drawImage(CFG.icon,ix-S*0.38,iy+S/2-S*0.38,S*0.76,S*0.76); CX.restore(); }
