@@ -161,6 +161,12 @@ input:focus,textarea:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(14
 .saved .chips i{display:inline-block;width:12px;height:12px;border-radius:50%;margin:0 1px;vertical-align:-1px;border:1px solid rgba(255,255,255,.25)}
 .saved .nav{flex-direction:column;align-items:stretch;gap:8px;margin-top:14px}
 .remember{margin-top:18px;width:100%}
+.preset{border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px;margin-top:10px;background:rgba(255,255,255,.02)}
+.preset .pn{font-weight:800;font-size:17px}.preset .pa{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:8px}
+.btn.sm{padding:9px 16px;font-size:15px;min-height:0}.preset .x{background:none;border:0;color:var(--muted);font-size:17px;cursor:pointer;padding:6px 8px}.preset .x:hover{color:#ff6b6b}
+.pname{display:block;margin-top:12px;text-align:right}.pname span{font-weight:700}.pname em{font:italic 400 15px var(--serif);color:var(--muted)}
+.pname input{display:block;width:100%;margin-top:6px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--text);font:600 17px inherit;box-sizing:border-box}
+.pname small{display:block;margin-top:6px;color:var(--muted);font-size:13px;direction:ltr;text-align:right}
 .sum{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:8px}
 .sum li{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--field)}
 .sum .k{color:var(--muted);font-size:13px}.sum .v{font-weight:700;overflow-wrap:anywhere}
@@ -437,7 +443,7 @@ const STEPS=[
     <label><small>الجملة الأخيرة — قصيرة وكتبان كبيرة</small><input type="text" id="cta" maxlength="60" value="${esc(A.cta)}" placeholder="تبعني للجزء الثاني"></label>
     <label><small>كلمة يكتبوها ف الكومنت (اختياري)</small><input type="text" id="word" value="${esc(A.word)}" placeholder="CODE"></label></div>`:''}`},
 ];
-let SAVED=null, REMEMBER=true;   // saved settings from a past video · «save for my next videos»
+let SAVED=null, REMEMBER=true, PRESETS=[], EDIT=null, PNAME='';   // saved settings from a past video · «save for my next videos»
 let step=-1;   // -1 welcome · 0..n-1 steps · n summary · n+1 done
 
 function layDiagram(v){ const P=(st,c='')=>`<span class="p ${c}" style="${st}"></span>`, V=st=>`<span class="v" style="${st}"></span>`;
@@ -491,10 +497,15 @@ function welcome(){
   $('#card').innerHTML=`<div class="welcome"><h1 class="hello">مرحبا <em>بيك</em></h1><div class="big-mark"><b>Hib</b><span>AI</span></div><div class="studio">Studio</div>
     <p class="lead">جاوب على أسئلة بالزربة باش نقدر نقاد ليك الفيديو بالطريقة اللي بغيتي.</p>
     <p class="lead-en">Answer a few quick questions so I can edit your video exactly the way you want.</p>
-    ${SAVED?savedBox():`<div class="nav" style="justify-content:center"><button type="button" class="btn go" id="next">يلاه نبداو <span class="sub2">let's go</span></button></div>`}
+    ${PRESETS.length?presetsBox():`<div class="nav" style="justify-content:center"><button type="button" class="btn go" id="next">يلاه نبداو <span class="sub2">let's go</span></button></div>`}
     <div class="by"><img src="assets/pfp.png" alt="" onerror="this.remove()"><span>Welcome to the HibAI community · by</span><b>@hibssssi</b></div></div>`;
-  $('#next').onclick=()=>{ if(SAVED) toast('حليت الإعدادات اللي سجّلتي قبل — بدّل اللي بغيتي'); go(1); };
-  if($('#useSaved')){ $('#useSaved').onclick=()=>send({...SAVED, remember:true, reused:true}); $('#useSaved').focus(); } else $('#next').focus();
+  $('#next').onclick=()=>{ if(PRESETS.length) location.search='?new=1'; else go(1); };   /* «+ new preset» starts empty */
+  $$('[data-use]').forEach(b=>b.onclick=()=>send({...PRESETS[+b.dataset.use], remember:true, reused:true}));
+  $$('[data-edit]').forEach(b=>b.onclick=()=>{ location.search='?edit='+encodeURIComponent(PRESETS[+b.dataset.edit].presetId); });
+  $$('[data-del]').forEach(b=>b.onclick=async()=>{ const i=+b.dataset.del, p=PRESETS[i]; if(!confirm('Delete «'+(p.presetName||'')+'»?')) return;
+    try{ await fetch('/api/preset-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:p.presetId})}); }catch(e){}
+    PRESETS.splice(i,1); welcome(); });
+  const u=$('[data-use]'); (u||$('#next')).focus();
 }
 function mark(g){ if(g) touched.add(g); }
 function wire(s){
@@ -550,6 +561,21 @@ function go(d){ step=Math.max(-1,Math.min(STEPS.length,step+d)); render(); windo
 
 /* ═══ Summary + save (same payload as before → 00_onboard.py) ═══ */
 /* a returning user: their saved settings in one look + one click to reuse them */
+/* saved presets: each with its look in chips + use (1 click) · edit · delete — and «+ new preset» */
+function presetsBox(){
+  const cards=PRESETS.slice(0,8).map((p,i)=>`<div class="preset"><div class="pn">${esc(p.presetName||'My settings')}</div><div class="chips">${chipsOf(p)}</div>
+    <div class="pa"><button type="button" class="btn go sm" data-use="${i}">خدم بيه <span class="sub2">use</span></button>
+    <button type="button" class="btn ghost sm" data-edit="${i}">بدّل <span class="sub2">edit</span></button>
+    <button type="button" class="x" data-del="${i}" title="delete" aria-label="delete">✕</button></div></div>`).join('');
+  return `<div class="saved"><div class="k">💾 الإعدادات المسجّلة ديالك<em>Your saved presets</em></div>${cards}
+    <div class="nav"><button type="button" class="btn ghost" id="next">+ إعدادات جداد <span class="sub2">new preset</span></button></div></div>`;
+}
+function chipsOf(p){
+  const hb=p.hibai||{}, c=(p.identity||{}).colors, chip=s=>`<span>${s}</span>`;
+  return [c?chip(['bg','ink','acc'].map(k=>`<i style="background:${c[k]}"></i>`).join('')):'',
+    p.font?chip(esc(p.font)):'', hb.latinFont?chip(esc(hb.latinFont)):'', hb.layout?chip(esc(nameOf(LAYOUTS,hb.layout))):'',
+    hb.bg&&hb.bg.style?chip(esc(nameOf(BG_STYLES,hb.bg.style))):'', hb.capWords?chip(esc(nameOf(CAPWORDS,String(hb.capWords)))):''].join('');
+}
 function savedBox(){
   const p=SAVED, hb=p.hibai||{}, c=(p.identity||{}).colors, chip=s=>`<span>${s}</span>`;
   const chips=[c?chip(['bg','ink','acc'].map(k=>`<i style="background:${c[k]}"></i>`).join('')):'',
@@ -583,6 +609,7 @@ function collect(){
 function savedUp(k){ const v=SAVED&&SAVED.hibai&&SAVED.hibai[k]; return typeof v==='string'?v:undefined; }
 const nameOf=(list,v)=>{const o=list.find(x=>x.v===v); return o?o.n:v;};
 function summary(){
+  if(!PNAME) PNAME=EDIT?(EDIT.presetName||'My settings'):(PRESETS.length?'Preset '+(PRESETS.length+1):'My settings');
   const c=colors(), pal=PALETTES.find(p=>p.id===A.palette);
   const at=title=>STEPS.findIndex(s=>s.dr===title), yn=v=>v?'إيه':'لا';
   const rows=[
@@ -604,10 +631,14 @@ function summary(){
   $('#card').innerHTML=`<h1 class="dr">هادشي اللي اخترتي</h1><p class="en">Here's your brief</p>
     <ul class="sum">${rows.map(([k,v,i])=>`<li><div><div class="k">${k}</div><div class="v">${v}</div></div><button type="button" data-goto="${i}">بدّل</button></li>`).join('')}</ul>
     <button type="button" class="toggle remember ${REMEMBER?'on':''}" id="remember" role="switch" aria-checked="${REMEMBER}"><span class="state">سجّل هاد الاختيارات للفيديوهات الجاية<span style="display:block;font:italic 400 15px var(--serif);color:var(--muted);direction:ltr;text-align:right">${REMEMBER?'Saved for my next videos — no need to fill this again':'Only for this video — next time starts from my saved settings'}</span></span><span class="switch"></span></button>
+    ${REMEMBER?`<label class="pname"><span>سمّي هاد الإعدادات</span> <em>· Preset name</em><input id="pname" maxlength="40" value="${esc(PNAME)}" placeholder="My brand" onfocus="this.select()"><small id="phint"></small></label>`:''}
     <div class="nav"><button type="button" class="btn go" id="save">يلاه نبداو <span class="sub2">start</span></button><button type="button" class="btn ghost" id="back">رجع</button></div>`;
   $('#remember').onclick=()=>{ REMEMBER=!REMEMBER; summary(); };
+  const ph=()=>{ const v=PNAME.trim().toLowerCase(), ex=PRESETS.find(p=>(p.presetName||'').trim().toLowerCase()===v);
+    if($('#phint')) $('#phint').textContent=ex?'Same name → updates «'+ex.presetName+'»':(PRESETS.length?'New preset — your other presets stay':'Your first preset'); };
+  if($('#pname')){ $('#pname').oninput=e=>{ PNAME=e.target.value; ph(); }; ph(); }
   $$('[data-goto]').forEach(b=>b.onclick=()=>{ step=+b.dataset.goto; render(); });
-  $('#back').onclick=()=>go(-1); $('#save').onclick=()=>send({...collect(), remember:REMEMBER});
+  $('#back').onclick=()=>go(-1); $('#save').onclick=()=>send({...collect(), remember:REMEMBER, presetName:REMEMBER?(PNAME.trim()||'My settings'):undefined});
 }
 async function send(obj){
   obj.savedAt=new Date().toISOString();
@@ -621,7 +652,7 @@ function done(obj,saved){
   step=STEPS.length+1; chrome(); $('#bar').style.width='100%';
   const o={...obj}; if(o.identity&&o.identity.logo) o.identity={...o.identity,logo:'(صيفط اللوغو ف الشات)'};
   $('#card').innerHTML=`<div class="done"><div class="tick">✓</div>
-    <h1 class="dr">${!saved?'نسخ هادشي وصيفطو لـ Claude':obj.skip?'واخا، خليها عليا':obj.reused?'يلاه! بإعداداتك المسجّلة':obj.remember===false?'واخا — غير لهاد الفيديو':'تسجّل للفيديوهات الجاية!'}</h1>
+    <h1 class="dr">${!saved?'نسخ هادشي وصيفطو لـ Claude':obj.skip?'واخا، خليها عليا':obj.reused?'يلاه! بـ«<bdi>'+esc(obj.presetName||'')+'</bdi>»':obj.remember===false?'واخا — غير لهاد الفيديو':'تسجّل ف «<bdi>'+esc(obj.presetName||'')+'</bdi>»'}</h1>
     <p class="en" style="text-align:center">${saved?'Saved, head back to Claude':'Copy this and send it to Claude'}</p>
     <p class="help" style="text-align:center">${saved?'رجع لـ Claude — الخدمة بدات. تقدر تسدّ هاد الصفحة.':'الصفحة محلولة بلا Claude، ما قدرتش نسجّل براسي.'}</p>
     ${saved?'':`<pre>${esc(JSON.stringify(o,null,2))}</pre>`}</div>`;
@@ -637,8 +668,14 @@ document.addEventListener('keydown',e=>{
 /* ═══ Prefill from a saved profile ("change my settings") ═══ */
 async function prefill(){
   if(!SERVER) return;
-  let p=null; try{ const r=await fetch('/api/profile'); if(r.ok) p=await r.json(); }catch(e){}
+  try{ const r=await fetch('/api/presets'); if(r.ok) PRESETS=await r.json(); }catch(e){}
+  const q=new URLSearchParams(location.search);
+  if(q.has('new')){ step=0; return; }                                        /* + new preset: empty, straight to the questions */
+  let p=null;
+  if(q.get('edit')){ p=PRESETS.find(x=>x.presetId===q.get('edit'))||null; if(p) step=0; }   /* edit one preset: filled with it */
+  if(!p){ try{ const r=await fetch('/api/profile'); if(r.ok) p=await r.json(); }catch(e){} }
   if(!p||!p.version||p.skip) return;
+  EDIT=PRESETS.find(x=>x.presetId===p.presetId)||(q.get('edit')?p:null);
   SAVED=p;
   A.note=p.note||'';
   const id=p.identity||{};

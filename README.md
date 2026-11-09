@@ -46,10 +46,18 @@ You talk, it does the rest: cuts, captions, motion graphics, real logos and inte
 ## The HibAI dashboard
 
 Every new video starts with a page where you pick everything **visually**: colours, logo, fonts, backgrounds, layout,
-captions (with a live preview), and the motions you like or never want. Fill it once, tick
-**«save for my next videos»**, and next time it's **one click: «use my saved settings»**.
+captions (with a live preview), and the motions you like or never want.
 
 <p align="center"><img src=".github/readme/dashboard.jpg" alt="The HibAI dashboard" width="100%"></p>
+
+### 💾 Saved presets: fill it once, reuse it in one click
+
+- At the end, give your choices a name (for example **«My brand»** or **«Client X»**) and they're saved for your next videos.
+- Next time, the dashboard shows your presets: **use** one in one click, **edit** it, delete it, or start a **new** one.
+- Same name = that preset is updated. New name = a new preset, and your other presets stay.
+- Just for one video? Turn off «save for my next videos» and nothing saved changes.
+- Your presets stay on your computer (in `.hibai-studio`), each with its own logo and fonts. Updating the skill doesn't erase them.
+- No time for the dashboard? Just tell Claude: **"edit it with my Client X settings"**.
 
 ## Layouts and backgrounds
 

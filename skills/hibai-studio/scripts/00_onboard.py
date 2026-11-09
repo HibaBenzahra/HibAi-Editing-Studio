@@ -13,6 +13,8 @@
       يكتب DIR/theme.json من الملف (ما يلمس ثيماً موجوداً إلا بـ--force) وينسخ الشعار.
   python3 scripts/00_onboard.py onacc DIR       يحسب لون النص فوق التمييز ويكتبه theme.onAcc (بعد ما تكتب ألواناً بيدك)
   python3 scripts/00_onboard.py path            يطبع مسار الملف
+  python3 scripts/00_onboard.py presets         HibAI: the saved presets (name · last used)
+  python3 scripts/00_onboard.py use "Client X" --work DIR   HibAI: that preset for this video, no dashboard (then: theme DIR)
 
   VAE_HOME=<مجلد> يغيّر مكان الحفظ (للتجربة) بدل ~/.hibai-studio
   يشتغل على ماك وويندوز (python بدل python3 على ويندوز) — مكتبات بايثون القياسية بس.
@@ -31,7 +33,8 @@ except Exception:
 SKILL = Path(__file__).resolve().parent.parent
 PAGE = SKILL / "onboarding" / "index.html"
 HOME = Path(os.environ.get("VAE_HOME") or (Path.home() / ".hibai-studio"))
-PROFILE = HOME / "profile.json"
+PROFILE = HOME / "profile.json"          # the settings used last (every script reads this one)
+PRESETS = HOME / "presets"               # HibAI: named presets — presets/<id>.json (+ presets/<id>/ for its logo, fonts, background)
 VOICE_RE = re.compile(r"^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$")
 SAMPLE_TEXT = "هلا والله! هذا صوتي. أقدر أقرا لك سكربت الفيديو كامل، شرايك فيه؟"   # لهجة
 SAMPLE_FUSHA = "أَهْلًا بِكَ. هٰذَا صَوْتِي، وَأَسْتَطِيعُ أَنْ أَقْرَأَ لَكَ نَصَّ الْفِيدْيُو كَامِلًا بِوُضُوح."   # فصحى مشكّلة — تطلع بلا غلط
@@ -105,6 +108,46 @@ def ensure_previews(moves_dir):
                     (d / Path(n).name).write_bytes(f.read(n))
 
 
+def pslug(name):
+    s = re.sub(r"[^\w-]+", "-", str(name or "").strip().lower(), flags=re.UNICODE).strip("-")
+    return s[:40] or "preset"
+
+
+def load_preset(pid):
+    try:
+        return json.loads((PRESETS / (pslug(pid) + ".json")).read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def migrate_presets():
+    """older installs had one saved profile — it becomes the preset «My settings» (once), so a new preset never hides it"""
+    if PRESETS.is_dir() and any(PRESETS.glob("*.json")):
+        return
+    p = load_profile()
+    if p and not p.get("skip"):
+        p = dict(p); p.setdefault("presetName", "My settings"); p["presetId"] = pslug(p["presetName"])
+        atomic_write(PRESETS / (p["presetId"] + ".json"), json.dumps(p, ensure_ascii=False, indent=2))
+
+
+def list_presets():
+    """all saved presets, the one used last first"""
+    migrate_presets()
+    out = []
+    if PRESETS.is_dir():
+        for f in PRESETS.glob("*.json"):
+            try:
+                p = json.loads(f.read_text(encoding="utf-8")); p["presetId"] = f.stem; out.append(p)
+            except Exception:
+                pass
+    if not out:
+        p = load_profile()
+        if p and not p.get("skip"):
+            p = dict(p); p.setdefault("presetName", "My settings"); p["presetId"] = pslug(p["presetName"]); out.append(p)
+    out.sort(key=lambda p: p.get("lastUsed") or p.get("savedAt") or "", reverse=True)
+    return out
+
+
 def log(*a):
     print(*a, file=sys.stderr, flush=True)
 
@@ -131,7 +174,11 @@ def clean(obj, work=None):
     obj = dict(obj)
     obj["remember"] = obj.get("remember", True) is not False
     obj.pop("reused", None)                      # only for the page's «done» message
-    store = HOME if (obj["remember"] or not work) else Path(work) / "hibai-uploads"
+    name = str(obj.get("presetName") or "").strip()[:40] or "My settings"   # same name = update that preset · new name = a new one
+    pid = pslug(name)
+    if obj["remember"]: obj["presetName"], obj["presetId"] = name, pid
+    else: obj.pop("presetName", None); obj.pop("presetId", None)   # «only this video»: not a preset
+    store = (PRESETS / pid) if (obj["remember"] or not work) else Path(work) / "hibai-uploads"
     obj.setdefault("version", 1)
     obj["savedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     if obj.get("skip"):
@@ -169,7 +216,7 @@ def clean(obj, work=None):
     elif lg is not None and not isinstance(lg, str):
         idn.pop("logo", None)
     elif lg is None:
-        prev = (load_profile() or {}).get("identity", {}) or {}
+        prev = (load_preset(pid) or load_profile() or {}).get("identity", {}) or {}
         if isinstance(prev.get("logo"), str) and Path(prev["logo"]).exists():
             idn["logo"] = prev["logo"]  # ما رفع شعاراً جديداً = نخلي القديم
     obj["identity"] = idn
@@ -213,12 +260,19 @@ def clean(obj, work=None):
 
 
 def save(obj, work):
+    migrate_presets()
     old = load_profile() or {}
     if "moves" in old and "moves" not in obj:      # اختيار معرض الحركات (35_moves.py) ما ينمسح لو عاد صفحة التعارف
         obj["moves"] = old["moves"]
     text = json.dumps(obj, ensure_ascii=False, indent=2)
     paths = []
-    if obj.get("remember", True) or obj.get("skip") or not work:   # «save for my next videos» (default) → the saved profile
+    if obj.get("remember", True) or obj.get("skip") or not work:   # «save for my next videos» (default) → its preset + the settings used last
+        if not obj.get("skip"):
+            obj["lastUsed"] = obj.get("savedAt")
+            text = json.dumps(obj, ensure_ascii=False, indent=2)
+            pf = PRESETS / (obj.get("presetId") or pslug(obj.get("presetName"))) 
+            atomic_write(pf.with_suffix(".json"), text)
+            paths.append(str(pf.with_suffix(".json")))
         atomic_write(PROFILE, text)
         paths.append(str(PROFILE))
     if work:
@@ -303,6 +357,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"moves": p.get("moves") or {"on": [], "off": []}, "colors": ((p.get("identity") or {}).get("colors")) or {}})
         if u.path == "/api/ping":
             return self._send(200, {"ok": True})
+        if u.path == "/api/presets":
+            return self._send(200, list_presets())
         if u.path == "/api/profile":
             p = load_profile()
             return self._send(200, p or {})
@@ -341,6 +397,23 @@ class Handler(BaseHTTPRequestHandler):
                 p = load_profile() or {}
                 p["moves"] = {"on": on, "off": off}
                 atomic_write(PROFILE, json.dumps(p, ensure_ascii=False, indent=2))
+                if p.get("presetId") and load_preset(p["presetId"]) is not None:   # keep the preset in step
+                    atomic_write(PRESETS / (pslug(p["presetId"]) + ".json"), json.dumps(p, ensure_ascii=False, indent=2))
+            except Exception as e:
+                return self._send(400, {"ok": False, "error": str(e)})
+            return self._send(200, {"ok": True})
+        if urlparse(self.path).path == "/api/preset-delete":      # HibAI: delete one named preset (and its files)
+            ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+            origin, host = self.headers.get("Origin"), self.headers.get("Host") or ""
+            if ctype != "application/json" or (origin and origin != "http://" + host):
+                return self._send(403, {"ok": False, "error": "forbidden"})
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                pid = pslug(json.loads(self.rfile.read(min(n, 4096)).decode("utf-8")).get("id"))
+                (PRESETS / (pid + ".json")).unlink(missing_ok=True)
+                if (PRESETS / pid).is_dir(): shutil.rmtree(PRESETS / pid, ignore_errors=True)
+                last = load_profile() or {}
+                if pslug(last.get("presetId") or last.get("presetName") or "my settings") == pid: PROFILE.unlink(missing_ok=True)
             except Exception as e:
                 return self._send(400, {"ok": False, "error": str(e)})
             return self._send(200, {"ok": True})
@@ -580,6 +653,19 @@ def main():
         return serve(rest)
     if cmd == "show":
         print(json.dumps(load_profile() or {}, ensure_ascii=False, indent=2))
+        return 0
+    if cmd == "presets":                                     # HibAI: list the saved presets
+        for p in list_presets():
+            print(f"{p.get('presetName')}  ·  {p.get('lastUsed') or p.get('savedAt') or ''}")
+        return 0
+    if cmd == "use":                                         # use <preset name> --work DIR → that preset for this video (no dashboard)
+        name = " ".join(x for i, x in enumerate(rest) if x != "--work" and (i == 0 or rest[i - 1] != "--work"))
+        work = rest[rest.index("--work") + 1] if "--work" in rest else None
+        p = next((x for x in list_presets() if pslug(x.get("presetName")) == pslug(name)), None)
+        if not p:
+            log("⛔ no preset called «" + name + "» — saved: " + ", ".join(x.get("presetName", "") for x in list_presets())); return 3
+        p = dict(p, lastUsed=time.strftime("%Y-%m-%dT%H:%M:%S%z"), remember=True)
+        print("\n".join(save(p, work)))
         return 0
     if cmd == "path":
         print(PROFILE)

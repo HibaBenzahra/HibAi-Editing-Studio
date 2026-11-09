@@ -25,8 +25,9 @@ description: 'HibAI Studio by Hiba (@hibssssi) — edits a talking-to-camera vid
 ### A) The flow: 3 approvals, then the video
 Never jump to the final render. Every edit goes through these gates, in this order:
 
-0. **Every new video starts with the HibAI dashboard** (`references/start.md` step 0.5) — a returning user reuses their saved
-   settings in one click («use my saved settings»), and at the end anyone can tick «save these choices for my next videos».
+0. **Every new video starts with the HibAI dashboard** (`references/start.md` step 0.5) — a returning user picks one of their
+   saved **presets** in one click («My brand», «Client X»…), edits one, or starts a new one; at the end they name what they save
+   (same name = update, new name = a new preset, the others stay) or keep it for this video only.
    Don't open it again for edits of the same video, or when the user says «same settings» / «no dashboard».
 
 1. **Before editing — 2 questions** (skip a question only if the dashboard already answered it, `profile.json` ← `hibai.audio` / `hibai.light`):
